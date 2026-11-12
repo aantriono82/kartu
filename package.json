@@ -50,6 +50,11 @@
       "!**/*.{md,markdown}",
       "!**/*.d.ts"
     ],
+    "compression": "maximum",
+    "electronLanguages": [
+      "id",
+      "en-US"
+    ],
     "win": {
       "target": "nsis",
       "signAndEditExecutable": false
