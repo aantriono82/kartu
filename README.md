@@ -44,3 +44,9 @@ KARTU_SMOKE=$PWD/scripts/smoke.cjs KARTU_SMOKE_OUT=/tmp/kartu-out KARTU_SMOKE_IM
   npx electron . --user-data-dir=/tmp/kartu-data
 ```
 Mengisi data contoh lalu menghasilkan PDF/PNG ke `KARTU_SMOKE_OUT`.
+
+## Rilis versi baru
+
+1. Naikkan `version` di `package.json` (mis. `1.0.1`), commit.
+2. `git tag v1.0.1 && git push origin main --tags`
+3. GitHub Actions membangun installer dan membuat Release **Kartu Ujian v1.0.1** berisi `.exe` dan `.AppImage`.
