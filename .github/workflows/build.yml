@@ -47,6 +47,7 @@ jobs:
           path: |
             dist/*.exe
             dist/*.AppImage
+            dist/*.deb
 
   release:
     # Buat GitHub Release (sidebar "Releases") saat push tag v*, mis. v1.0.0
@@ -71,4 +72,5 @@ jobs:
             --notes "Installer Kartu Ujian $TAG
 
           - **Windows 10/11:** unduh \`KartuUjian-Setup-*.exe\`, jalankan. Jika muncul peringatan SmartScreen, klik *More info → Run anyway*.
-          - **Linux:** unduh \`KartuUjian-*.AppImage\`, beri izin eksekusi (\`chmod +x\`), lalu jalankan."
+          - **Linux Mint / Ubuntu (disarankan):** unduh \`KartuUjian-*-amd64.deb\`, klik dua kali → *Install Package*. Aplikasi muncul di Menu → Kantor → Kartu Ujian. Untuk update, pasang .deb versi baru dengan cara yang sama.
+          - **Linux lain:** unduh \`KartuUjian-*.AppImage\`, beri izin eksekusi (\`chmod +x\`), lalu jalankan."

@@ -14,7 +14,7 @@ npm run build        # build ke folder out/
 ## Membuat installer
 
 ```bash
-npm run dist:linux   # dist/KartuUjian-<versi>.AppImage
+npm run dist:linux   # dist/KartuUjian-<versi>.AppImage + dist/KartuUjian-<versi>-amd64.deb
 npm run dist:win     # dist/KartuUjian-Setup-<versi>.exe  (di Linux butuh wine: sudo apt install wine)
 ```
 
@@ -36,8 +36,22 @@ installer `.exe` dibangun di Windows dan bisa diunduh dari artifact.
 
 Data tersimpan di folder data aplikasi (lihat menu Backup & Restore → Folder data).
 
+## Memasang di Linux Mint / Ubuntu
+
+Unduh `KartuUjian-<versi>-amd64.deb` dari Releases, klik dua kali → **Install Package**
+(atau `sudo apt install ./KartuUjian-<versi>-amd64.deb`). Aplikasi muncul di Menu → Kantor → **Kartu Ujian**.
+Update: pasang .deb versi baru dengan cara yang sama. Hapus: `sudo apt remove kartu-ujian` (data di
+`~/.config/Kartu Ujian` tidak ikut terhapus).
+
 ## Uji otomatis (pengembangan)
 
+```bash
+npm test             # di Linux tanpa layar: xvfb-run -a npm test
+```
+Menjalankan smoke test (import Excel, PDF/PNG 4 template) dan uji backup/restore di dalam Electron.
+Juga dijalankan GitHub Actions di setiap push; installer hanya dibuat jika lulus.
+
+Smoke test manual dengan data sekolah asli:
 ```bash
 npm run build
 KARTU_SMOKE=$PWD/scripts/smoke.cjs KARTU_SMOKE_OUT=/tmp/kartu-out KARTU_SMOKE_IMG=/path/contoh-kartu.png \
@@ -50,4 +64,4 @@ Mengisi data contoh lalu menghasilkan PDF/PNG ke `KARTU_SMOKE_OUT`. Tambahkan
 
 1. Naikkan `version` di `package.json` (mis. `1.0.1`), commit.
 2. `git tag v1.0.1 && git push origin main --tags`
-3. GitHub Actions membangun installer dan membuat Release **Kartu Ujian v1.0.1** berisi `.exe` dan `.AppImage`.
+3. GitHub Actions membangun installer dan membuat Release **Kartu Ujian v1.0.1** berisi `.exe`, `.deb`, dan `.AppImage`.
