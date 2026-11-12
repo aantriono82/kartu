@@ -1,0 +1,71 @@
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+}
+.sheet {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  overflow: hidden;
+  break-after: page;
+}
+.sheet:last-child {
+  break-after: auto;
+}
+.crop-marks {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.slot {
+  position: absolute;
+}
+.calib {
+  position: absolute;
+  border: 0.3mm solid #000;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+.calib-back {
+  border-style: dashed;
+  border-color: #c00;
+}
+.calib-cross {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(#000, #000) center / 0.2mm 100% no-repeat,
+    linear-gradient(#000, #000) center / 100% 0.2mm no-repeat;
+  opacity: 0.5;
+}
+.calib-back .calib-cross {
+  background:
+    linear-gradient(#c00, #c00) center / 0.2mm 100% no-repeat,
+    linear-gradient(#c00, #c00) center / 100% 0.2mm no-repeat;
+}
+.calib-label {
+  position: absolute;
+  left: 3mm;
+  top: 3mm;
+  font-size: 11pt;
+  font-weight: 700;
+}
+.calib-back .calib-label {
+  color: #c00;
+  left: auto;
+  right: 3mm;
+}
+.calib-help {
+  position: absolute;
+  left: 10mm;
+  right: 10mm;
+  bottom: 2mm;
+  font: 8pt 'Poppins', sans-serif;
+  text-align: center;
+}
