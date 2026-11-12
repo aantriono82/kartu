@@ -620,7 +620,14 @@ h3.sub {
   margin: 12px 0 16px;
 }
 
-/* sambutan instalasi baru (Pengaturan Sekolah masih kosong) */
+/* kotak petunjuk: sambutan instalasi baru, ujian tanpa peserta */
+.notice {
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+.notice,
 .panel.notice {
   margin-bottom: 16px;
   background: #fff8e1;

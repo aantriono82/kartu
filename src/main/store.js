@@ -68,7 +68,15 @@ export function getSettings() {
   return out
 }
 
+// Versi aset (logo/TTD/stempel) hanya diubah lewat setAsset, tidak ikut tombol Simpan pengaturan
+// (formulir bisa membawa versi lama sehingga gambar lama dari cache yang tampil).
 export function saveSettings(patch) {
+  // eslint-disable-next-line no-unused-vars
+  const { assets, ...rest } = patch || {}
+  return writeSettings(rest)
+}
+
+function writeSettings(patch) {
   const next = { ...getSettings(), ...patch }
   next.offsetX = Number(next.offsetX) || 0
   next.offsetY = Number(next.offsetY) || 0
@@ -93,7 +101,9 @@ export function setAsset(key, pngBuffer) {
   const s = getSettings()
   if (pngBuffer) fs.writeFileSync(assetPath(key), pngBuffer)
   else fs.rmSync(assetPath(key), { force: true })
-  return saveSettings({ assets: { ...s.assets, [key]: pngBuffer ? (s.assets[key] || 0) + 1 : 0 } })
+  // versi = waktu unggah: selalu baru (juga setelah hapus lalu unggah lagi), jadi URL gambar tidak pernah sama dengan gambar lama
+  const ver = pngBuffer ? Math.max(Date.now(), (Number(s.assets[key]) || 0) + 1) : 0
+  return writeSettings({ assets: { ...s.assets, [key]: ver } })
 }
 
 // ---------- students ----------

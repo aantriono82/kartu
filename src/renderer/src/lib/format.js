@@ -31,9 +31,10 @@ export const assetUrl = (settings, key) => (settings.assets?.[key] ? `kartu://as
 const nat = (a, b) => String(a ?? '').localeCompare(String(b ?? ''), 'id', { numeric: true, sensitivity: 'base' })
 export const uniqueSorted = (arr) => [...new Set(arr.filter(Boolean))].sort(nat)
 
+// Hanya untuk pratinjau di Pengaturan; nama dibuat jelas-jelas contoh agar tidak tertukar dengan siswa sungguhan.
 export const SAMPLE_PARTICIPANT = {
   nisn: '0101234567',
-  nama: 'NARUTI UZUKIMI',
+  nama: 'NAMA SISWA CONTOH',
   kelas: 'IX.1',
   no_urut: '2',
   nomor_peserta: '10801923',

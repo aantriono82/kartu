@@ -303,6 +303,12 @@ function ExamDetail({ exam, settings, onChanged }) {
             Import Excel berisi kolom NISN, NAMA, KELAS, NO URUT, NOMOR PESERTA, RUANG, SESI, USERNAME, PASSWORD. Siswa baru otomatis
             ditambahkan ke Data Siswa; foto diambil dari Data Siswa berdasarkan NISN.
           </p>
+          {!participants.length && (
+            <div className="notice">
+              <b>Belum ada peserta di ujian ini.</b> Siswa di menu Data Siswa tidak otomatis menjadi peserta. Klik <b>Tambah</b> atau{' '}
+              <b>Import Excel</b> untuk memasukkannya — foto dari Data Siswa akan ikut tampil di kartu.
+            </div>
+          )}
           <div className="toolbar">
             <div className="search">
               <Search size={16} />
@@ -356,7 +362,7 @@ function ExamDetail({ exam, settings, onChanged }) {
                 {!shown.length && (
                   <tr>
                     <td colSpan={8} className="empty">
-                      {participants.length ? 'Tidak ada yang cocok.' : 'Belum ada peserta. Import dari Excel.'}
+                      {participants.length ? 'Tidak ada yang cocok.' : 'Belum ada peserta.'}
                     </td>
                   </tr>
                 )}
@@ -442,7 +448,7 @@ function ExamDetail({ exam, settings, onChanged }) {
               <ScaledCard scale={0.355} template={form.template} side="back" p={preview} settings={settings} exam={liveExam} />
             </>
           ) : (
-            <p className="muted">Belum ada peserta.</p>
+            <p className="muted">Kartu (beserta foto siswa) tampil di sini setelah peserta ditambahkan ke ujian ini.</p>
           )}
         </div>
       </div>

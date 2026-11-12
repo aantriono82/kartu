@@ -228,7 +228,9 @@ async function startup() {
   createWindow()
   // Hook pengujian otomatis (hanya saat pengembangan): KARTU_SMOKE=/path/script.cjs
   if (process.env.KARTU_SMOKE && !app.isPackaged) {
-    require(process.env.KARTU_SMOKE)({ app, nativeImage, db, store, excel, exporter, paths, removeWhiteBackground, trimImage })
+    // Promise.resolve().then: error saat memuat skrip (mis. salah sintaks) juga langsung gagal, tidak menggantung
+    Promise.resolve()
+      .then(() => require(process.env.KARTU_SMOKE)({ app, nativeImage, db, store, excel, exporter, paths, removeWhiteBackground, trimImage }))
       .then(() => app.quit())
       .catch((e) => {
         console.error('SMOKE FAIL', e)

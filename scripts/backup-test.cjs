@@ -105,6 +105,23 @@ module.exports = async ({ app, db, store, exporter, paths }) => {
   assert.equal(store.getSettings().nip, '1')
   console.log('ok pengaturan rusak')
 
+  // ganti logo berkali-kali: versi (penanda cache gambar) harus selalu baru
+  const logoVer = () => store.getSettings().assets.logoKab
+  const seen = new Set()
+  store.setAsset('logoKab', Buffer.from('a'))
+  seen.add(logoVer())
+  store.setAsset('logoKab', Buffer.from('b'))
+  seen.add(logoVer())
+  store.setAsset('logoKab', null) // hapus lalu unggah lagi
+  assert.equal(logoVer(), 0)
+  store.setAsset('logoKab', Buffer.from('c'))
+  seen.add(logoVer())
+  assert.equal(seen.size, 3, 'versi logo tidak boleh berulang')
+  const latest = logoVer()
+  store.saveSettings({ namaSekolah: 'X', assets: { logoKab: 1 } }) // formulir membawa versi lama
+  assert.equal(logoVer(), latest, 'Simpan pengaturan tidak boleh mengubah versi logo')
+  console.log('ok ganti logo')
+
   fs.rmSync(tmp, { recursive: true, force: true })
   console.log('BACKUP TEST OK')
 }

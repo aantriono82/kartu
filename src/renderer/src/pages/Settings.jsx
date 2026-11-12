@@ -175,7 +175,10 @@ export default function Settings({ settings, onChange }) {
               ))}
             </select>
           </div>
-          <p className="muted">{dirty ? 'Pratinjau memakai isian yang belum disimpan.' : 'Contoh data siswa.'}</p>
+          <p className="muted">
+            {dirty ? 'Pratinjau memakai isian yang belum disimpan. ' : ''}
+            Data siswa di sini hanya contoh. Kartu siswa sungguhan (dengan fotonya) ada di menu <b>Ujian &amp; Cetak</b>.
+          </p>
           <ScaledCard scale={0.56} template={template} side="front" p={SAMPLE_PARTICIPANT} settings={form} exam={exam} />
           <div style={{ height: 12 }} />
           <ScaledCard scale={0.56} template={template} side="back" p={SAMPLE_PARTICIPANT} settings={form} exam={exam} />
