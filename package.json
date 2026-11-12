@@ -1,6 +1,6 @@
 {
   "name": "kartu-ujian",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Aplikasi pembuat kartu peserta ujian sekolah",
   "main": "out/main/index.js",
   "scripts": {
