@@ -25,7 +25,23 @@ export function qrText(p, settings, exam) {
   ].join('\n')
 }
 
-export const photoUrl = (p) => (p?.has_photo ? `kartu://photo/${encodeURIComponent(p.nisn)}?v=${p.photo_ver}` : null)
+export const photoUrl = (p) =>
+  p?.photo_src || (p?.has_photo ? `kartu://photo/${encodeURIComponent(p.nisn)}?v=${p.photo_ver}` : null)
+
+// Foto ilustrasi untuk pratinjau bila belum ada siswa berfoto (bukan foto orang sungguhan).
+const SAMPLE_PHOTO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">
+<defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9363e"/><stop offset="1" stop-color="#b3242b"/></linearGradient></defs>
+<rect width="300" height="400" fill="url(#b)"/>
+<path d="M28 400c6-84 52-122 122-122s116 38 122 122z" fill="#ffffff"/>
+<path d="M108 286l42 48 42-48-16-10h-52z" fill="#e9edf3"/>
+<path d="M150 300l-12 14 12 70 12-70z" fill="#1f3a68"/>
+<rect x="128" y="226" width="44" height="58" rx="18" fill="#e8b48f"/>
+<ellipse cx="150" cy="168" rx="70" ry="80" fill="#f2c4a0"/>
+<path d="M78 160c-4-62 34-98 74-98s76 34 72 98c-10-30-28-46-72-46s-62 16-74 46z" fill="#2b2b33"/>
+<ellipse cx="124" cy="172" rx="7" ry="8" fill="#2b2b33"/><ellipse cx="176" cy="172" rx="7" ry="8" fill="#2b2b33"/>
+<path d="M130 208q20 14 40 0" stroke="#b5725a" stroke-width="5" fill="none" stroke-linecap="round"/>
+</svg>`
+export const SAMPLE_PHOTO = 'data:image/svg+xml;utf8,' + encodeURIComponent(SAMPLE_PHOTO_SVG)
 export const assetUrl = (settings, key) => (settings.assets?.[key] ? `kartu://asset/${key}?v=${settings.assets[key]}` : null)
 
 const nat = (a, b) => String(a ?? '').localeCompare(String(b ?? ''), 'id', { numeric: true, sensitivity: 'base' })

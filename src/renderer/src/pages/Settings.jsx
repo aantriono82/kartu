@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Upload, Trash2, Save } from 'lucide-react'
 import { ScaledCard, TEMPLATE_OPTIONS } from '../components/Card'
 import { BANK_COLORS } from '../../../shared/templates'
 import { Field, useAction } from '../components/ui'
-import { assetUrl, formatNip, nipValid, SAMPLE_PARTICIPANT } from '../lib/format'
+import { assetUrl, formatNip, nipValid, SAMPLE_PARTICIPANT, SAMPLE_PHOTO } from '../lib/format'
+import { designSize } from '../../../shared/templates'
 
 const TEXT_FIELDS = [
   ['pemerintah', 'Baris 1 – Pemerintah', 'Template terang & hijau', 'PEMERINTAH KABUPATEN ...'],
@@ -34,10 +35,33 @@ function Slider({ label, unit, value, onChange, ...range }) {
   )
 }
 
+/** Lebar elemen (px), diperbarui saat jendela/kolom berubah ukuran. */
+function useWidth() {
+  const ref = useRef(null)
+  const [w, setW] = useState(0)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setW(el.clientWidth))
+    ro.observe(el)
+    setW(el.clientWidth)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, w]
+}
+
 export default function Settings({ settings, onChange }) {
   const [form, setForm] = useState(settings)
   const [template, setTemplate] = useState('terang')
   const [run, busy] = useAction()
+  const [student, setStudent] = useState(null) // siswa berfoto pertama di Data Siswa, untuk pratinjau
+  const [previewRef, previewW] = useWidth()
+  useEffect(() => {
+    window.api
+      .listStudents()
+      .then((list) => setStudent(list.find((s) => s.has_photo) || null))
+      .catch(() => {})
+  }, [])
   useEffect(() => setForm((f) => ({ ...f, assets: settings.assets })), [settings.assets])
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
@@ -58,6 +82,11 @@ export default function Settings({ settings, onChange }) {
   const clear = (key) => run(() => window.api.clearAsset(key).then(onChange))
 
   const exam = { nama: 'UJIAN SEKOLAH', tahun: '2025/2026', template }
+  const sample = student
+    ? { ...SAMPLE_PARTICIPANT, nisn: student.nisn, nama: student.nama, kelas: student.kelas || SAMPLE_PARTICIPANT.kelas, has_photo: 1, photo_ver: student.photo_ver }
+    : { ...SAMPLE_PARTICIPANT, photo_src: SAMPLE_PHOTO }
+  // kartu mengikuti lebar kolom pratinjau (maks. 0,56× ukuran desain)
+  const scale = previewW ? Math.min(0.56, previewW / designSize(template).w) : 0.4
 
   return (
     <div className="page">
@@ -165,7 +194,7 @@ export default function Settings({ settings, onChange }) {
         </div>
 
         <div className="panel preview-panel">
-          <div className="row between">
+          <div className="row between gap-s preview-head">
             <h2>Pratinjau</h2>
             <select value={template} onChange={(e) => setTemplate(e.target.value)}>
               {TEMPLATE_OPTIONS.map(([v, l]) => (
@@ -177,11 +206,20 @@ export default function Settings({ settings, onChange }) {
           </div>
           <p className="muted">
             {dirty ? 'Pratinjau memakai isian yang belum disimpan. ' : ''}
-            Data siswa di sini hanya contoh. Kartu siswa sungguhan (dengan fotonya) ada di menu <b>Ujian &amp; Cetak</b>.
+            {student ? (
+              <>
+                Foto &amp; nama diambil dari Data Siswa ({student.nama}); nomor peserta, ruang, sesi, dan akun hanya contoh.
+              </>
+            ) : (
+              'Data siswa di sini hanya contoh (foto ilustrasi). '
+            )}{' '}
+            Kartu untuk dicetak ada di menu <b>Ujian &amp; Cetak</b>.
           </p>
-          <ScaledCard scale={0.56} template={template} side="front" p={SAMPLE_PARTICIPANT} settings={form} exam={exam} />
-          <div style={{ height: 12 }} />
-          <ScaledCard scale={0.56} template={template} side="back" p={SAMPLE_PARTICIPANT} settings={form} exam={exam} />
+          <div ref={previewRef} className="preview-cards">
+            <ScaledCard scale={scale} template={template} side="front" p={sample} settings={form} exam={exam} />
+            <div style={{ height: 12 }} />
+            <ScaledCard scale={scale} template={template} side="back" p={sample} settings={form} exam={exam} />
+          </div>
         </div>
       </div>
     </div>

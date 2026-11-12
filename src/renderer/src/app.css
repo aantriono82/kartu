@@ -467,7 +467,8 @@ textarea {
 /* settings */
 .settings-grid {
   display: grid;
-  grid-template-columns: minmax(380px, 1fr) auto;
+  /* kolom pratinjau ikut menyempit; kartu di dalamnya diskalakan sesuai lebar (Settings.jsx) */
+  grid-template-columns: minmax(380px, 1fr) minmax(300px, 568px);
   gap: 18px;
   align-items: start;
 }
@@ -477,13 +478,33 @@ textarea {
 .preview-panel {
   position: sticky;
   top: 0;
+  min-width: 0;
+}
+.preview-head select {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 70%;
+}
+.preview-cards {
+  width: 100%;
+  min-width: 0;
+}
+.settings-grid > .panel:first-child {
+  container-type: inline-size;
 }
 .assets {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* 2 kolom bila panel sempit (tidak meluber ke pratinjau), 4 kolom bila lebar */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
+@container (min-width: 560px) {
+  .assets {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
 .asset {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -577,7 +598,7 @@ h3.sub {
 }
 .slider {
   display: grid;
-  grid-template-columns: 190px 1fr 64px;
+  grid-template-columns: minmax(120px, 190px) minmax(80px, 1fr) 64px;
   align-items: center;
   gap: 10px;
   margin: 6px 0;
