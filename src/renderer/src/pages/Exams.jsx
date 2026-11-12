@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2, FileSpreadsheet, Download, FileText, Image, Crosshair, Pencil, Search, Save } from 'lucide-react'
-import { ScaledCard } from '../components/Card'
+import { ScaledCard, TEMPLATE_OPTIONS } from '../components/Card'
 import { Field, ImportResult, Modal, useAction, useToast } from '../components/ui'
 import { uniqueSorted } from '../lib/format'
 
@@ -109,8 +109,11 @@ function ExamForm({ value, onChange }) {
       </Field>
       <Field label="Template">
         <select value={value.template} onChange={(e) => onChange({ ...value, template: e.target.value })}>
-          <option value="terang">Terang (hemat tinta)</option>
-          <option value="gelap">Gelap</option>
+          {TEMPLATE_OPTIONS.map(([v, l]) => (
+            <option key={v} value={v}>
+              {l}
+            </option>
+          ))}
         </select>
       </Field>
     </>
@@ -241,8 +244,11 @@ function ExamDetail({ exam, settings, onChanged }) {
           </Field>
           <Field label="Template">
             <select value={form.template} onChange={(e) => setForm({ ...form, template: e.target.value })}>
-              <option value="terang">Terang</option>
-              <option value="gelap">Gelap</option>
+              {TEMPLATE_OPTIONS.map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
             </select>
           </Field>
           <button className="btn primary" disabled={!dirty || busy} onClick={saveExam}>

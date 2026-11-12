@@ -39,7 +39,7 @@ export const SAMPLE_PARTICIPANT = {
   nomor_peserta: '10801923',
   ruang: '1',
   sesi: '1',
-  username: 'smp1-10801923',
+  username: 'smp2-10801923',
   password: 'ab12cd',
   has_photo: 0
 }

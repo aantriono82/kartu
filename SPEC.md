@@ -17,7 +17,7 @@
   - Import Excel. Foto via folder/ZIP, nama file = `NISN.jpg/png`, dicocokkan otomatis.
   - Foto: crop tengah otomatis rasio 3:4, dikompres (±450×600), bisa crop ulang manual.
   - Tanpa foto → placeholder.
-- **Ujian**: nama ujian, tahun pelajaran, template (Terang/Gelap).
+- **Ujian**: nama ujian, tahun pelajaran, template (Terang/Gelap/Hijau Resmi/Indigo).
   - Peserta di-import dari Excel: NISN, (Nama, Kelas — opsional, untuk membuat/memperbarui master siswa), No Urut, Nomor Peserta, Ruang, Sesi, Username, Password.
   - Ujian berikutnya cukup import peserta baru; foto & data siswa dipakai ulang.
 - Template Excel bisa diunduh dari aplikasi.
@@ -25,7 +25,7 @@
 
 ## Kartu
 - Ukuran 95 × 68 mm (rasio ±1,4 sesuai desain).
-- 2 template: **Terang** & **Gelap**, keduanya dengan QR.
+- 4 template: **Terang**, **Gelap**, **Hijau Resmi** (gaya kop surat dinas), & **Indigo** (foto dan tanda tangan berdampingan di bawah), semuanya dengan QR.
 - **Depan**: kop + 2 logo, judul "KARTU TANDA PESERTA {UJIAN} T.P {TAHUN}", No Urut, Nomor Peserta, Nama, Kelas, Ruang, Sesi, foto, Kepala Sekolah + TTD + stempel + NIP, QR.
 - **Belakang**: tata tertib, Username, Password.
 - QR berisi teks data siswa (nomor peserta, NISN, nama, kelas, sekolah, ujian).

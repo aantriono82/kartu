@@ -141,7 +141,7 @@ export async function writeTemplate(kind, file) {
   ws.addRow(
     kind === 'siswa'
       ? ['0101234567', 'AGENG FEBRIAN', 'IX.1']
-      : ['0101234567', 'AGENG FEBRIAN', 'IX.1', '2', '10801923', '1', '1', 'smp1-10801923', 'ab12cd']
+      : ['0101234567', 'AGENG FEBRIAN', 'IX.1', '2', '10801923', '1', '1', 'smp2-10801923', 'ab12cd']
   )
   ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }
   ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1554B3' } }

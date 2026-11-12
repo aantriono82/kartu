@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Upload, Trash2, Save } from 'lucide-react'
-import { ScaledCard } from '../components/Card'
+import { ScaledCard, TEMPLATE_OPTIONS } from '../components/Card'
 import { Field, useAction } from '../components/ui'
 import { assetUrl, formatNip, nipValid, SAMPLE_PARTICIPANT } from '../lib/format'
 
 const TEXT_FIELDS = [
-  ['pemerintah', 'Baris 1 – Pemerintah', 'Template terang'],
-  ['dinas', 'Baris 2 – Dinas', 'Kedua template'],
+  ['pemerintah', 'Baris 1 – Pemerintah', 'Template terang & hijau'],
+  ['dinas', 'Baris 2 – Dinas', 'Semua template'],
   ['uptd', 'Baris 3 – UPTD', 'Template terang'],
-  ['namaSekolah', 'Nama Sekolah', 'Kedua template'],
+  ['namaSekolah', 'Nama Sekolah', 'Semua template'],
   ['wilayah', 'Wilayah', 'Template gelap, mis. KABUPATEN LAMPUNG TENGAH'],
   ['alamat', 'Alamat', '']
 ]
@@ -86,6 +86,9 @@ export default function Settings({ settings, onChange }) {
           >
             <input value={form.nip} onChange={set('nip')} placeholder="19710720 199702 2 002" />
           </Field>
+          <Field label="Tempat & tanggal (opsional)" hint="Template Indigo, di atas tulisan Kepala Sekolah. Kosongkan jika tidak perlu.">
+            <input value={form.tempatTanggal || ''} onChange={set('tempatTanggal')} placeholder="Bangunrejo, Mei 2026" />
+          </Field>
 
           <h2>Gambar</h2>
           <p className="muted">Gunakan PNG transparan untuk logo, tanda tangan, dan stempel.</p>
@@ -148,8 +151,11 @@ export default function Settings({ settings, onChange }) {
           <div className="row between">
             <h2>Pratinjau</h2>
             <select value={template} onChange={(e) => setTemplate(e.target.value)}>
-              <option value="terang">Template Terang</option>
-              <option value="gelap">Template Gelap</option>
+              {TEMPLATE_OPTIONS.map(([v, l]) => (
+                <option key={v} value={v}>
+                  Template {l.replace(' (hemat tinta)', '')}
+                </option>
+              ))}
             </select>
           </div>
           <p className="muted">{dirty ? 'Pratinjau memakai isian yang belum disimpan.' : 'Contoh data siswa.'}</p>

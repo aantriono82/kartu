@@ -347,9 +347,242 @@ function BackGelap({ p, settings, exam }) {
   )
 }
 
+// ======================= TEMPLATE HIJAU RESMI =======================
+// Gaya kop surat dinas (garis ganda, tabel bergaris, watermark logo) + aksen hijau-emas.
+function HijauBar({ bottom }) {
+  return (
+    <svg className={'h-bar ' + (bottom ? 'h-bar-bot' : 'h-bar-top')} width="950" height="16" viewBox="0 0 950 16">
+      {bottom ? (
+        <>
+          <rect y="0" width="950" height="3" fill="#c9a227" />
+          <rect y="5" width="950" height="11" fill="#0f5132" />
+          <polygon points="700,5 950,5 950,16 680,16" fill="#198754" />
+        </>
+      ) : (
+        <>
+          <rect width="950" height="11" fill="#0f5132" />
+          <polygon points="0,0 270,0 250,11 0,11" fill="#198754" />
+          <rect y="13" width="950" height="3" fill="#c9a227" />
+        </>
+      )}
+    </svg>
+  )
+}
+
+function FrontHijau({ p, settings, exam }) {
+  const logo = assetUrl(settings, 'logoSekolah')
+  return (
+    <div className="card hijau">
+      {logo && <img src={logo} className="h-watermark" alt="" draggable={false} />}
+      <HijauBar />
+      <div className="h-logo h-logo-l">
+        <LogoSlot src={assetUrl(settings, 'logoKab')} label="LOGO KAB" />
+      </div>
+      <div className="h-logo h-logo-r">
+        <LogoSlot src={logo} label="LOGO SEKOLAH" />
+      </div>
+
+      <div className="h-head">
+        <FitText size={25} className="h-h1">{settings.pemerintah}</FitText>
+        <FitText size={21} className="h-h2">{settings.dinas}</FitText>
+        <FitText size={40} className="h-h3">{settings.namaSekolah}</FitText>
+        <FitText size={17} className="h-addr">{settings.alamat}</FitText>
+      </div>
+      <div className="h-rule" />
+
+      <div className="h-title">
+        <FitText size={24}>{cardTitle(exam)}</FitText>
+      </div>
+
+      <table className="h-table">
+        <tbody>
+          {ROWS.map(([, label, key]) => (
+            <tr key={key}>
+              <th>{label}</th>
+              <td>
+                <FitText size={22} min={10} lines={key === 'nama' ? 2 : 1} className="h-val">
+                  {p[key] || '-'}
+                </FitText>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="h-note">
+        <ShieldCheck size={22} strokeWidth={2.4} color="#0f5132" />
+        <span>Kartu wajib dibawa dan ditunjukkan kepada pengawas selama ujian berlangsung.</span>
+      </div>
+
+      <div className="h-photo">
+        <Photo p={p} />
+      </div>
+      <div className="h-qr">
+        <Qr text={qrText(p, settings, exam)} size={108} />
+        <div className="h-qr-cap">Pindai untuk verifikasi</div>
+      </div>
+
+      <div className="h-sign">
+        <div className="h-kepsek">Kepala Sekolah,</div>
+        <Signature settings={settings} height={72} />
+        <FitText size={18} min={10} className="h-name">{settings.kepalaSekolah}</FitText>
+        <FitText size={14.5} min={8} className="h-nip">
+          {settings.nip ? 'NIP. ' + formatNip(settings.nip) : ''}
+        </FitText>
+      </div>
+      <HijauBar bottom />
+    </div>
+  )
+}
+
+function BackHijau({ p, settings, exam }) {
+  const logo = assetUrl(settings, 'logoSekolah')
+  return (
+    <div className="card hijau back">
+      {logo && <img src={logo} className="h-watermark h-watermark-back" alt="" draggable={false} />}
+      <div className="b-band">
+        <div className="b-logo">
+          <LogoSlot src={logo} label="LOGO" />
+        </div>
+        <div className="b-head">
+          <FitText size={32} className="b-h1">TATA TERTIB PESERTA UJIAN</FitText>
+          <FitText size={19} className="b-h2">
+            {settings.namaSekolah} · {cardTitle(exam).replace('KARTU TANDA PESERTA ', '')}
+          </FitText>
+        </div>
+      </div>
+      <div className="h-band-gold" />
+      <BackBody p={p} settings={settings} />
+      <HijauBar bottom />
+    </div>
+  )
+}
+
+// ======================= TEMPLATE INDIGO =======================
+// Indigo-ungu dengan aksen cyan; foto dan tanda tangan kepala sekolah berdampingan di bagian bawah.
+function IndigoHeader({ settings, back, children }) {
+  return (
+    <>
+      <svg className="m-band" width="950" height={back ? 112 : 168} viewBox={`0 0 950 ${back ? 112 : 168}`} preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={'m-grad' + (back ? 'b' : 'f')} x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stopColor="#6d28d9" />
+            <stop offset="1" stopColor="#1e1b4b" />
+          </linearGradient>
+        </defs>
+        <rect width="950" height="100%" fill={`url(#m-grad${back ? 'b' : 'f'})`} />
+        <g fill="#fff" fillOpacity=".06">
+          <circle cx="80" cy="-20" r="120" />
+          <circle cx="900" cy="190" r="140" />
+        </g>
+        <polygon points="700,0 760,0 610,200 550,200" fill="#22d3ee" fillOpacity=".22" />
+        <polygon points="780,0 800,0 650,200 630,200" fill="#22d3ee" fillOpacity=".35" />
+        <polygon points="190,200 250,0 270,0 210,200" fill="#22d3ee" fillOpacity=".15" />
+      </svg>
+      <div className={'m-gold' + (back ? ' m-gold-back' : '')} />
+      {children}
+    </>
+  )
+}
+
+const INDIGO_ROWS = ROWS.map(([Icon, label, key]) => [Icon, label === 'NOMOR PESERTA' ? 'NO. PESERTA' : label, key])
+
+function FrontIndigo({ p, settings, exam }) {
+  return (
+    <div className="card indigo">
+      <IndigoHeader settings={settings}>
+        <div className="m-logo m-logo-l">
+          <LogoSlot src={assetUrl(settings, 'logoKab')} label="LOGO KAB" />
+        </div>
+        <div className="m-logo m-logo-r">
+          <LogoSlot src={assetUrl(settings, 'logoSekolah')} label="LOGO SEKOLAH" />
+        </div>
+        <div className="m-head">
+          <FitText size={21} className="m-h1">{settings.pemerintah}</FitText>
+          <FitText size={19} className="m-h1">{settings.dinas}</FitText>
+          <FitText size={40} className="m-h2">{settings.namaSekolah}</FitText>
+          <FitText size={15.5} className="m-addr">{settings.alamat}</FitText>
+        </div>
+      </IndigoHeader>
+
+      <div className="m-title">
+        <FitText size={23}>{cardTitle(exam)}</FitText>
+      </div>
+
+      <div className="m-rows">
+        {INDIGO_ROWS.map(([Icon, label, key]) => (
+          <div className="m-row" key={key}>
+            <div className="m-ico">
+              <Icon size={18} strokeWidth={2.4} color="#fff" />
+            </div>
+            <div className="m-label">{label}</div>
+            <div className="m-colon">:</div>
+            <FitText size={21} min={10} lines={key === 'nama' ? 2 : 1} className="m-val">
+              {p[key] || '-'}
+            </FitText>
+          </div>
+        ))}
+      </div>
+
+      <div className="m-qr">
+        <Qr text={qrText(p, settings, exam)} size={112} />
+        <div className="m-qr-cap">Pindai untuk verifikasi</div>
+      </div>
+
+      <div className="m-photo">
+        <Photo p={p} />
+      </div>
+      <div className="m-sign">
+        {settings.tempatTanggal ? <FitText size={16} min={9} className="m-place">{settings.tempatTanggal}</FitText> : null}
+        <div className="m-kepsek">Kepala Sekolah,</div>
+        <Signature settings={settings} height={72} />
+        <FitText size={19} min={10} className="m-name">{settings.kepalaSekolah}</FitText>
+        <FitText size={14.5} min={8} className="m-nip">
+          {settings.nip ? 'NIP. ' + formatNip(settings.nip) : ''}
+        </FitText>
+      </div>
+      <div className="m-note">
+        <ShieldCheck size={26} strokeWidth={2.2} color="#4338ca" />
+        <span>Kartu wajib dibawa dan ditunjukkan kepada pengawas selama ujian berlangsung.</span>
+      </div>
+      <div className="m-foot" />
+    </div>
+  )
+}
+
+function BackIndigo({ p, settings, exam }) {
+  return (
+    <div className="card indigo back">
+      <IndigoHeader settings={settings} back />
+      <div className="b-band">
+        <div className="b-logo">
+          <LogoSlot src={assetUrl(settings, 'logoSekolah')} label="LOGO" />
+        </div>
+        <div className="b-head">
+          <FitText size={32} className="b-h1">TATA TERTIB PESERTA UJIAN</FitText>
+          <FitText size={19} className="b-h2">
+            {settings.namaSekolah} · {cardTitle(exam).replace('KARTU TANDA PESERTA ', '')}
+          </FitText>
+        </div>
+      </div>
+      <BackBody p={p} settings={settings} />
+      <div className="m-foot" />
+    </div>
+  )
+}
+
+export const TEMPLATE_OPTIONS = [
+  ['terang', 'Terang (hemat tinta)'],
+  ['gelap', 'Gelap'],
+  ['hijau', 'Hijau Resmi (hemat tinta)'],
+  ['indigo', 'Indigo (foto & TTD berdampingan)']
+]
+
 const TEMPLATES = {
   terang: { front: FrontTerang, back: BackTerang },
-  gelap: { front: FrontGelap, back: BackGelap }
+  gelap: { front: FrontGelap, back: BackGelap },
+  hijau: { front: FrontHijau, back: BackHijau },
+  indigo: { front: FrontIndigo, back: BackIndigo }
 }
 
 /** Renders a card at design size (950×680 px). */

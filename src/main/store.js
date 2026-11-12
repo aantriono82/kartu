@@ -7,11 +7,12 @@ export const DEFAULT_SETTINGS = {
   pemerintah: 'PEMERINTAH KABUPATEN LAMPUNG TENGAH',
   dinas: 'DINAS PENDIDIKAN DAN KEBUDAYAAN',
   uptd: 'UPTD SATUAN PENDIDIKAN',
-  namaSekolah: 'SMP NEGERI 1 PUNGGUR',
+  namaSekolah: 'SMP NEGERI 2 BANGUNREJO',
   wilayah: 'KABUPATEN LAMPUNG TENGAH',
-  alamat: 'Jl. Pendidikan No.2 Tanggulangin, Kec. Punggur, Lampung Tengah',
-  kepalaSekolah: 'SITI ASIYAH, M.Pd',
+  alamat: 'Jl. Sinarjaya-Sinarluas, Kec. Bangunrejo, Lampung Tengah',
+  kepalaSekolah: 'EVI OKTAVIA, S.Pd., M.Pd.',
   nip: '',
+  tempatTanggal: '', // mis. "Bangunrejo, Mei 2026" (template indigo)
   tataTertib: [
     'Peserta hadir di sekolah 15 menit sebelum ujian dimulai.',
     'Peserta wajib membawa kartu ini dan menunjukkannya kepada pengawas.',
@@ -152,7 +153,7 @@ export function listExams() {
 
 export function saveExam({ id, nama, tahun, template }) {
   if (!String(nama ?? '').trim()) throw new Error('Nama ujian wajib diisi')
-  template = template === 'gelap' ? 'gelap' : 'terang'
+  template = ['gelap', 'hijau', 'indigo'].includes(template) ? template : 'terang'
   if (id) {
     run('UPDATE exams SET nama = ?, tahun = ?, template = ? WHERE id = ?', [nama.trim(), String(tahun ?? '').trim(), template, id])
     save()

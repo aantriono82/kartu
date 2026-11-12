@@ -43,7 +43,8 @@ npm run build
 KARTU_SMOKE=$PWD/scripts/smoke.cjs KARTU_SMOKE_OUT=/tmp/kartu-out KARTU_SMOKE_IMG=/path/contoh-kartu.png \
   npx electron . --user-data-dir=/tmp/kartu-data
 ```
-Mengisi data contoh lalu menghasilkan PDF/PNG ke `KARTU_SMOKE_OUT`.
+Mengisi data contoh lalu menghasilkan PDF/PNG ke `KARTU_SMOKE_OUT`. Tambahkan
+`KARTU_SMOKE_FROM="$HOME/.config/Kartu Ujian"` agar memakai pengaturan, logo, TTD, dan stempel sekolah yang asli.
 
 ## Rilis versi baru
 
