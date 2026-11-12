@@ -2,6 +2,8 @@
   position: relative;
   overflow: hidden;
   flex: none;
+  /* isolasi ukuran: isi 950px yang di-scale tidak boleh ikut dihitung lebar halaman saat cetak */
+  contain: strict;
 }
 .card-scale {
   position: absolute;
@@ -86,16 +88,17 @@
 }
 .sig-ttd {
   position: relative;
-  max-width: 100%;
+  max-width: 120%;
   object-fit: contain;
   z-index: 2;
 }
 .sig-stamp {
   position: absolute;
-  left: -14px;
+  left: 30%;
   top: 50%;
-  transform: translateY(-50%);
-  opacity: 0.82;
+  transform: translate(-50%, -50%);
+  max-width: none;
+  opacity: 0.85;
   z-index: 1;
 }
 .sig-invert {

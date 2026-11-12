@@ -571,3 +571,22 @@ textarea {
 .export-buttons .btn {
   justify-content: center;
 }
+h3.sub {
+  font-size: 13.5px;
+  margin: 16px 0 4px;
+}
+.slider {
+  display: grid;
+  grid-template-columns: 190px 1fr 64px;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+  font-size: 13px;
+}
+.slider input {
+  padding: 0;
+}
+.slider b {
+  text-align: right;
+  font-weight: 600;
+}

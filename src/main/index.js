@@ -8,7 +8,7 @@ import * as store from './store'
 import * as excel from './excel'
 import * as photoSource from './photoSource'
 import * as exporter from './export'
-import { removeWhiteBackground } from './image'
+import { removeWhiteBackground, trimImage } from './image'
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'kartu', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }
@@ -104,6 +104,7 @@ function registerIpc() {
       img = width >= height ? img.resize({ width: max, quality: 'best' }) : img.resize({ height: max, quality: 'best' })
     }
     if (key === 'ttd' || key === 'stempel') img = removeWhiteBackground(img)
+    img = trimImage(img)
     return store.setAsset(key, img.toPNG())
   })
   handle('settings:clearAsset', (e, key) => store.setAsset(key, null))
@@ -204,7 +205,7 @@ app.whenReady().then(async () => {
   createWindow()
   // Hook pengujian otomatis (hanya saat pengembangan): KARTU_SMOKE=/path/script.cjs
   if (process.env.KARTU_SMOKE && !app.isPackaged) {
-    require(process.env.KARTU_SMOKE)({ app, nativeImage, store, excel, exporter, paths, removeWhiteBackground })
+    require(process.env.KARTU_SMOKE)({ app, nativeImage, store, excel, exporter, paths, removeWhiteBackground, trimImage })
       .catch((e) => console.error('SMOKE FAIL', e))
       .finally(() => app.quit())
   }

@@ -58,11 +58,25 @@ function Qr({ text, size }) {
 function Signature({ settings, height, invert }) {
   const ttd = assetUrl(settings, 'ttd')
   const stempel = assetUrl(settings, 'stempel')
+  const num = (v, d) => (Number.isFinite(Number(v)) && v !== '' ? Number(v) : d)
+  const ttdH = (height * num(settings.ttdScale, 100)) / 100
+  const stampH = (height * num(settings.stempelScale, 150)) / 100
+  // 1 px desain = 0,1 mm
+  const dx = num(settings.stempelX, 0) * 10
+  const dy = num(settings.stempelY, 0) * 10
   return (
     <div className="sig" style={{ height }}>
-      {stempel && <img src={stempel} className="sig-stamp" alt="stempel" style={{ height: height * 1.05 }} draggable={false} />}
+      {stempel && (
+        <img
+          src={stempel}
+          className="sig-stamp"
+          alt="stempel"
+          style={{ height: stampH, transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))` }}
+          draggable={false}
+        />
+      )}
       {ttd && (
-        <img src={ttd} className={'sig-ttd' + (invert ? ' sig-invert' : '')} alt="tanda tangan" style={{ height }} draggable={false} />
+        <img src={ttd} className={'sig-ttd' + (invert ? ' sig-invert' : '')} alt="tanda tangan" style={{ height: ttdH }} draggable={false} />
       )}
     </div>
   )

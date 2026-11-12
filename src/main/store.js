@@ -23,6 +23,12 @@ export const DEFAULT_SETTINGS = {
   ].join('\n'),
   offsetX: 0,
   offsetY: 0,
+  // ukuran (%) dan posisi (mm) tanda tangan & stempel di kartu
+  cardGap: 4, // jarak antarkartu di lembar A4 (mm)
+  ttdScale: 100,
+  stempelScale: 150,
+  stempelX: 0,
+  stempelY: 0,
   // asset key -> version number (0 = belum ada)
   assets: { logoKab: 0, logoSekolah: 0, ttd: 0, stempel: 0 }
 }
@@ -40,6 +46,10 @@ export function saveSettings(patch) {
   const next = { ...getSettings(), ...patch }
   next.offsetX = Number(next.offsetX) || 0
   next.offsetY = Number(next.offsetY) || 0
+  for (const k of ['cardGap', 'ttdScale', 'stempelScale', 'stempelX', 'stempelY']) {
+    const n = Number(next[k])
+    next[k] = Number.isFinite(n) ? n : DEFAULT_SETTINGS[k]
+  }
   run("INSERT INTO settings(key, value) VALUES('school', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [
     JSON.stringify(next)
   ])

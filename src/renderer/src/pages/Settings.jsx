@@ -20,6 +20,19 @@ const ASSETS = [
   ['stempel', 'Stempel Sekolah']
 ]
 
+function Slider({ label, unit, value, onChange, ...range }) {
+  return (
+    <label className="slider">
+      <span>{label}</span>
+      <input type="range" value={value} onChange={onChange} {...range} />
+      <b>
+        {value}
+        {unit}
+      </b>
+    </label>
+  )
+}
+
 export default function Settings({ settings, onChange }) {
   const [form, setForm] = useState(settings)
   const [template, setTemplate] = useState('terang')
@@ -97,10 +110,24 @@ export default function Settings({ settings, onChange }) {
             ))}
           </div>
 
+          <h3 className="sub">Ukuran & posisi di kartu</h3>
+          <p className="muted small">Geser lalu lihat pratinjau di kanan. Jangan lupa klik Simpan.</p>
+          <Slider label="Ukuran tanda tangan" unit="%" min={40} max={200} step={5} value={form.ttdScale} onChange={set('ttdScale')} />
+          <Slider label="Ukuran stempel" unit="%" min={40} max={300} step={5} value={form.stempelScale} onChange={set('stempelScale')} />
+          <Slider label="Geser stempel kiri/kanan" unit=" mm" min={-15} max={15} step={0.5} value={form.stempelX} onChange={set('stempelX')} />
+          <Slider label="Geser stempel atas/bawah" unit=" mm" min={-10} max={10} step={0.5} value={form.stempelY} onChange={set('stempelY')} />
+
           <h2>Tata Tertib (kartu belakang)</h2>
           <Field label="Satu baris = satu poin">
             <textarea rows={8} value={form.tataTertib} onChange={set('tataTertib')} />
           </Field>
+
+          <h2>Tata Letak Cetak (A4, 8 kartu)</h2>
+          <Slider label="Jarak antarkartu" unit=" mm" min={0} max={5} step={0.5} value={form.cardGap} onChange={set('cardGap')} />
+          <p className="muted small">
+            Ada garis potong putus-putus tipis di celah antarkartu. Isi 0 jika kartu ingin dicetak rapat (satu kali potong di antara dua
+            kartu).
+          </p>
 
           <h2>Kalibrasi Cetak Bolak-balik</h2>
           <p className="muted">

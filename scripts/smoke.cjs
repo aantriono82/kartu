@@ -4,7 +4,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const ExcelJS = require('exceljs')
 
-module.exports = async ({ nativeImage, store, excel, exporter, removeWhiteBackground }) => {
+module.exports = async ({ nativeImage, store, excel, exporter, removeWhiteBackground, trimImage }) => {
   const out = process.env.KARTU_SMOKE_OUT
   fs.mkdirSync(out, { recursive: true })
   const src = nativeImage.createFromPath(process.env.KARTU_SMOKE_IMG)
@@ -12,6 +12,9 @@ module.exports = async ({ nativeImage, store, excel, exporter, removeWhiteBackgr
   store.setAsset('logoKab', crop(125, 117, 140, 165).toPNG())
   store.setAsset('logoSekolah', crop(1018, 100, 172, 186).toPNG())
   store.setAsset('ttd', removeWhiteBackground(crop(895, 525, 215, 125)).toPNG())
+  if (process.env.KARTU_SMOKE_STAMP) {
+    store.setAsset('stempel', trimImage(removeWhiteBackground(nativeImage.createFromPath(process.env.KARTU_SMOKE_STAMP).resize({ width: 1000 }))).toPNG())
+  }
   store.saveSettings({ nip: '197107202019970 2 002'.replace(/\s/g, '').slice(0, 18) })
 
   const photo = crop(566, 438, 244, 312)

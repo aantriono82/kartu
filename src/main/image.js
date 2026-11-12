@@ -25,3 +25,33 @@ export function removeWhiteBackground(img) {
   }
   return nativeImage.createFromBitmap(px, { width, height })
 }
+
+/**
+ * Potong ruang kosong (transparan atau putih) di sekeliling gambar,
+ * supaya ukuran di kartu ditentukan oleh isi gambar, bukan oleh margin file.
+ */
+export function trimImage(img) {
+  const { width, height } = img.getSize()
+  const px = img.toBitmap()
+  const isEmpty = (i) => px[i + 3] < 24 || (px[i + 3] > 250 && Math.min(px[i], px[i + 1], px[i + 2]) >= 245)
+  let top = height
+  let bottom = -1
+  let left = width
+  let right = -1
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (isEmpty((y * width + x) * 4)) continue
+      if (y < top) top = y
+      if (y > bottom) bottom = y
+      if (x < left) left = x
+      if (x > right) right = x
+    }
+  }
+  if (bottom < 0) return img // gambar kosong
+  const pad = Math.round(Math.max(right - left, bottom - top) * 0.02)
+  const x = Math.max(0, left - pad)
+  const y = Math.max(0, top - pad)
+  const rect = { x, y, width: Math.min(width, right + pad + 1) - x, height: Math.min(height, bottom + pad + 1) - y }
+  if (rect.width === width && rect.height === height) return img
+  return img.crop(rect)
+}

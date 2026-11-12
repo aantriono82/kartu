@@ -11,9 +11,12 @@ body {
 .sheet {
   position: relative;
   width: 210mm;
-  height: 297mm;
+  /* sedikit di bawah 297mm agar pembulatan piksel tidak memecah lembar ke halaman berikutnya */
+  height: 296.5mm;
   overflow: hidden;
+  contain: strict;
   break-after: page;
+  break-inside: avoid;
 }
 .sheet:last-child {
   break-after: auto;
@@ -25,6 +28,14 @@ body {
 }
 .slot {
   position: absolute;
+}
+/* garis potong tipis tepat di luar tepi kartu (hanya terlihat di celah antarkartu) */
+.slot-cutline::after {
+  content: '';
+  position: absolute;
+  inset: -0.25mm;
+  border: 0.1mm dashed #8a94a6;
+  pointer-events: none;
 }
 .calib {
   position: absolute;
@@ -63,9 +74,13 @@ body {
 }
 .calib-help {
   position: absolute;
-  left: 10mm;
-  right: 10mm;
-  bottom: 2mm;
-  font: 8pt 'Poppins', sans-serif;
-  text-align: center;
+  left: 3mm;
+  top: 10mm;
+  width: 40mm;
+  font: 7pt/1.35 'Poppins', sans-serif;
+}
+.calib-help-back {
+  left: auto;
+  right: 3mm;
+  color: #c00;
 }
