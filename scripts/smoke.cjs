@@ -1,7 +1,8 @@
 // Uji otomatis: isi data contoh lalu render PDF & PNG.
-// Jalankan: KARTU_SMOKE=$PWD/scripts/smoke.cjs KARTU_SMOKE_OUT=/tmp/kartu-out KARTU_SMOKE_IMG=contoh.png npx electron-vite preview -- --user-data-dir=/tmp/kartu-data
+// Jalankan lewat `npm test` (atau manual: KARTU_SMOKE=$PWD/scripts/smoke.cjs KARTU_SMOKE_OUT=/tmp/kartu-out KARTU_SMOKE_IMG=contoh.png npx electron-vite preview -- --user-data-dir=/tmp/kartu-data)
 const fs = require('node:fs')
 const path = require('node:path')
+const assert = require('node:assert/strict')
 const ExcelJS = require('exceljs')
 
 module.exports = async ({ nativeImage, store, excel, exporter, removeWhiteBackground, trimImage }) => {
@@ -62,6 +63,8 @@ module.exports = async ({ nativeImage, store, excel, exporter, removeWhiteBackgr
     const examId = store.saveExam({ nama: 'UJIAN SEKOLAH', tahun: '2025/2026', template })
     const r = await excel.importParticipants(examId, xlsx)
     console.log('import', template, JSON.stringify(r))
+    assert.equal(r.added, names.length, 'semua peserta ber-NISN masuk')
+    assert.deepEqual(r.errors.map((e) => e.message), ['NISN kosong'], 'baris tanpa NISN ditolak')
     if (template === 'terang') {
       for (const s of store.listStudents().slice(0, 8)) {
         const jpg = photo.resize({ width: 450, height: 600 }).toJPEG(88)
@@ -70,12 +73,21 @@ module.exports = async ({ nativeImage, store, excel, exporter, removeWhiteBackgr
     }
     for (const side of ['front', 'back']) {
       const t = Date.now()
-      const res = await exporter.renderPdf({ examId, side, filter: {} }, path.join(out, `${template}-${side}.pdf`))
+      const file = path.join(out, `${template}-${side}.pdf`)
+      const res = await exporter.renderPdf({ examId, side, filter: {} }, file)
       console.log('pdf', template, side, res, Date.now() - t, 'ms')
+      assert.equal(res.pages, Math.ceil(names.length / 8), `${template} ${side}: jumlah halaman`)
+      assert.equal(fs.readFileSync(file).subarray(0, 5).toString(), '%PDF-')
     }
     const ids = store.listParticipants(examId).slice(0, 2).map((p) => p.id)
     const res = await exporter.renderPngZip({ examId, side: 'front', filter: { ids }, includeBack: true }, path.join(out, `${template}-png.zip`))
     console.log('png', template, res)
+    assert.equal(res.count, 2)
+    const zip = await require('jszip').loadAsync(fs.readFileSync(path.join(out, `${template}-png.zip`)))
+    const pngs = Object.keys(zip.files)
+    assert.equal(pngs.length, 4, 'depan + belakang untuk 2 siswa')
+    const img = nativeImage.createFromBuffer(await zip.file(pngs[0]).async('nodebuffer'))
+    assert.deepEqual(img.getSize(), { width: 1900, height: 1360 })
   }
   await exporter.renderPdf({ side: 'calib' }, path.join(out, 'kalibrasi.pdf'))
   console.log('SMOKE OK')

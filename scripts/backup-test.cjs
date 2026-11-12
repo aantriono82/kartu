@@ -1,5 +1,5 @@
 // Uji backup / restore / migrasi / backup otomatis / pengaturan rusak.
-// Jalankan: KARTU_SMOKE=$PWD/scripts/backup-test.cjs npx electron-vite preview -- --user-data-dir=$(mktemp -d)
+// Jalankan lewat `npm test`.
 const fs = require('node:fs')
 const path = require('node:path')
 const assert = require('node:assert/strict')

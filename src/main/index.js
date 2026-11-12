@@ -227,8 +227,11 @@ async function startup() {
   // Hook pengujian otomatis (hanya saat pengembangan): KARTU_SMOKE=/path/script.cjs
   if (process.env.KARTU_SMOKE && !app.isPackaged) {
     require(process.env.KARTU_SMOKE)({ app, nativeImage, db, store, excel, exporter, paths, removeWhiteBackground, trimImage })
-      .catch((e) => console.error('SMOKE FAIL', e))
-      .finally(() => app.quit())
+      .then(() => app.quit())
+      .catch((e) => {
+        console.error('SMOKE FAIL', e)
+        app.exit(1)
+      })
     return
   }
   // Backup harian otomatis, setelah jendela tampil agar tidak memperlambat pembukaan
