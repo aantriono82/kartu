@@ -55,6 +55,14 @@ function sh(cmd, args, env = {}) {
   return { status: r.status, out }
 }
 
+// Electron ≥ 45 tidak mengunduh binari saat `npm ci`; electron-vite butuh binari yang sudah ada.
+const electronDir = path.dirname(require.resolve('electron/package.json', { paths: [root] }))
+if (!fs.existsSync(path.join(electronDir, 'path.txt'))) {
+  console.log('Mengunduh binari Electron...')
+  const r = spawnSync(process.execPath, [path.join(electronDir, 'install.js')], { cwd: root, stdio: 'inherit' })
+  if (r.status !== 0) process.exit(1)
+}
+
 const build = sh('npx', ['electron-vite', 'build'])
 if (build.status !== 0) {
   console.log(build.out)
