@@ -590,3 +590,32 @@ h3.sub {
   text-align: right;
   font-weight: 600;
 }
+
+.warn-box {
+  border: 1px solid var(--warn);
+  background: #fff8ec;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 6px 0 10px;
+  font-size: 12.5px;
+}
+.warn-box ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+.crash {
+  max-width: 760px;
+  margin: 60px auto;
+  padding: 24px;
+}
+.crash-detail {
+  max-height: 260px;
+  overflow: auto;
+  font-size: 12px;
+  background: #fafbfd;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  white-space: pre-wrap;
+  margin: 12px 0 16px;
+}

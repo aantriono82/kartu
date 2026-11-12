@@ -3,6 +3,7 @@ import { Plus, Trash2, FileSpreadsheet, Download, FileText, Image, Crosshair, Pe
 import { ScaledCard, TEMPLATE_OPTIONS } from '../components/Card'
 import { Field, ImportResult, Modal, useAction, useToast } from '../components/ui'
 import { uniqueSorted } from '../lib/format'
+import { duplicateSummary, findDuplicates } from '../lib/check'
 
 const EMPTY_EXAM = { nama: 'UJIAN SEKOLAH', tahun: '', template: 'terang' }
 const P_FIELDS = [
@@ -151,6 +152,10 @@ function ExamDetail({ exam, settings, onChanged }) {
   }, [printSet, q])
   const preview = participants.find((p) => p.id === previewId) || shown[0]
   const noPhoto = printSet.filter((p) => !p.has_photo).length
+  const noNomor = printSet.filter((p) => !String(p.nomor_peserta ?? '').trim()).length
+  // duplikat dicek terhadap seluruh peserta ujian, bukan hanya yang difilter
+  const dups = useMemo(() => findDuplicates(participants), [participants])
+  const dupsInPrint = dups.groups.filter((g) => g.people.some((p) => printSet.includes(p)))
   const liveExam = { ...exam, ...form }
   const dirty = form.nama !== exam.nama || form.tahun !== exam.tahun || form.template !== exam.template
 
@@ -213,15 +218,29 @@ function ExamDetail({ exam, settings, onChanged }) {
     if (dirty) throw new Error('Simpan perubahan ujian dulu sebelum mencetak')
     if (!printSet.length) throw new Error('Tidak ada peserta untuk dicetak')
   }
+  /** false jika pengguna membatalkan karena ada data ganda. */
+  const confirmDuplicates = () =>
+    !dupsInPrint.length ||
+    confirm(
+      `Ada ${duplicateSummary(dupsInPrint)} pada peserta yang akan dicetak:\n\n` +
+        dupsInPrint
+          .slice(0, 8)
+          .map((g) => `• ${g.label} ${g.value}: ${g.people.map((p) => p.nama).join(', ')}`)
+          .join('\n') +
+        (dupsInPrint.length > 8 ? `\n• ...dan ${dupsInPrint.length - 8} lainnya` : '') +
+        '\n\nSebaiknya perbaiki dulu. Tetap cetak?'
+    )
   const exportPdf = (side) =>
     run(async () => {
       needSaved()
+      if (!confirmDuplicates()) return null
       const r = await window.api.exportPdf(job(side), `${baseName} - ${side === 'back' ? 'Belakang' : 'Depan'}.pdf`)
       return r
     }, (r) => `PDF tersimpan (${r.pages} halaman)`)
   const exportPng = () =>
     run(async () => {
       needSaved()
+      if (!confirmDuplicates()) return null
       setProgress({ done: 0, total: printSet.length })
       try {
         return await window.api.exportPng({ ...job('front'), includeBack }, `${baseName} - PNG.zip`)
@@ -307,7 +326,13 @@ function ExamDetail({ exam, settings, onChanged }) {
                 {shown.map((p) => (
                   <tr key={p.id} className={preview?.id === p.id ? 'selected' : ''} onClick={() => setPreviewId(p.id)}>
                     <td>{p.no_urut}</td>
-                    <td className="mono">{p.nomor_peserta}</td>
+                    <td
+                      className={'mono' + (dups.fieldsById.get(p.id)?.has('nomor_peserta') ? ' text-danger' : '')}
+                      title={dups.fieldsById.has(p.id) ? 'Data ganda: ' + [...dups.fieldsById.get(p.id)].join(', ').replace('nomor_peserta', 'nomor peserta') : undefined}
+                    >
+                      {p.nomor_peserta}
+                      {dups.ids.has(p.id) && ' ⚠'}
+                    </td>
                     <td>{p.nama}</td>
                     <td>{p.kelas}</td>
                     <td>{p.ruang}</td>
@@ -359,7 +384,22 @@ function ExamDetail({ exam, settings, onChanged }) {
           <p className="muted small">
             {printSet.length} kartu · {Math.ceil(printSet.length / 8)} lembar A4
             {noPhoto > 0 && <span className="text-warn"> · {noPhoto} tanpa foto</span>}
+            {noNomor > 0 && <span className="text-warn"> · {noNomor} tanpa nomor peserta</span>}
           </p>
+          {dups.groups.length > 0 && (
+            <div className="warn-box">
+              <b>⚠ {duplicateSummary(dups.groups)}</b>
+              <ul>
+                {dups.groups.slice(0, 5).map((g) => (
+                  <li key={g.field + g.value}>
+                    {g.label} <span className="mono">{g.value}</span>: {g.people.map((p) => p.nama).join(', ')}
+                  </li>
+                ))}
+                {dups.groups.length > 5 && <li>...dan {dups.groups.length - 5} lainnya</li>}
+              </ul>
+              <span className="muted">Perbaiki lewat tombol edit (✎) di tabel atau import ulang Excel.</span>
+            </div>
+          )}
           <div className="export-buttons">
             <button className="btn primary" onClick={() => exportPdf('front')} disabled={busy}>
               <FileText size={16} /> PDF Depan

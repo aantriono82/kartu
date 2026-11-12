@@ -11,6 +11,7 @@ import './app.css'
 import App from './App'
 import PrintView from './pages/PrintView'
 import PngView from './pages/PngView'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const FONTS = [
   '400 16px Poppins',
@@ -27,9 +28,24 @@ function route() {
   const [path, query = ''] = location.hash.replace(/^#\/?/, '').split('?')
   const params = new URLSearchParams(query)
   const job = params.get('job') ? JSON.parse(params.get('job')) : null
-  if (path === 'print') return <PrintView job={job} />
-  if (path === 'png') return <PngView job={job} />
-  return <App />
+  // Di jendela cetak tersembunyi, error dilaporkan ke proses utama agar ekspor langsung gagal (tidak menunggu timeout).
+  if (path === 'print')
+    return (
+      <ErrorBoundary bare onError={(e) => window.api.printReady({ error: 'Gagal merender kartu: ' + e.message })}>
+        <PrintView job={job} />
+      </ErrorBoundary>
+    )
+  if (path === 'png')
+    return (
+      <ErrorBoundary bare onError={(e) => window.api.pngReady({ error: 'Gagal merender kartu: ' + e.message })}>
+        <PngView job={job} />
+      </ErrorBoundary>
+    )
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  )
 }
 
 // Font harus sudah dimuat sebelum kartu dirender, karena ukuran teks diukur saat render.

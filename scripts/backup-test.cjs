@@ -1,4 +1,4 @@
-// Uji backup / restore / migrasi / backup otomatis.
+// Uji backup / restore / migrasi / backup otomatis / pengaturan rusak.
 // Jalankan: KARTU_SMOKE=$PWD/scripts/backup-test.cjs npx electron-vite preview -- --user-data-dir=$(mktemp -d)
 const fs = require('node:fs')
 const path = require('node:path')
@@ -85,6 +85,25 @@ module.exports = async ({ app, db, store, exporter, paths }) => {
   await exporter.restore(f) // backup otomatis bisa direstore
   assert.equal(count(), 3)
   console.log('ok backup otomatis')
+
+  // pengaturan rusak → pakai bawaan, aset yang filenya ada tetap tampil
+  fs.writeFileSync(path.join(paths.assets, 'logoSekolah.png'), 'png')
+  for (const bad of ['{rusak', '[]', 'null']) {
+    db.run("INSERT INTO settings(key, value) VALUES('school', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [bad])
+    const s = store.getSettings()
+    assert.equal(s.namaSekolah, store.DEFAULT_SETTINGS.namaSekolah)
+    assert.equal(s.assets.logoSekolah, 1)
+    assert.equal(s.assets.ttd, 0)
+  }
+  store.saveSettings({ namaSekolah: { x: 1 }, tataTertib: null, nip: 197610, offsetX: 'abc' }) // tipe salah
+  const t = store.getSettings()
+  assert.equal(t.namaSekolah, store.DEFAULT_SETTINGS.namaSekolah)
+  assert.equal(t.tataTertib, store.DEFAULT_SETTINGS.tataTertib)
+  assert.equal(t.nip, '197610')
+  assert.equal(t.offsetX, 0)
+  store.saveSettings({ nip: '1' }) // bisa disimpan lagi
+  assert.equal(store.getSettings().nip, '1')
+  console.log('ok pengaturan rusak')
 
   fs.rmSync(tmp, { recursive: true, force: true })
   console.log('BACKUP TEST OK')

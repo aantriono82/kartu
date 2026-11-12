@@ -37,10 +37,32 @@ export const DEFAULT_SETTINGS = {
 export const ASSET_KEYS = Object.keys(DEFAULT_SETTINGS.assets)
 
 // ---------- settings ----------
+function parseSaved(text) {
+  try {
+    const v = JSON.parse(text)
+    if (v && typeof v === 'object' && !Array.isArray(v)) return v
+  } catch {
+    /* lihat di bawah */
+  }
+  // Data pengaturan rusak: pakai bawaan agar aplikasi tetap bisa dibuka (aset/logo tetap di folder assets).
+  console.error('Pengaturan sekolah rusak, memakai pengaturan bawaan')
+  return {}
+}
+
 export function getSettings() {
   const row = get("SELECT value FROM settings WHERE key = 'school'")
-  const saved = row ? JSON.parse(row.value) : {}
-  return { ...DEFAULT_SETTINGS, ...saved, assets: { ...DEFAULT_SETTINGS.assets, ...(saved.assets || {}) } }
+  const saved = row ? parseSaved(row.value) : {}
+  // versi aset 0 tapi filenya ada (mis. pengaturan sempat rusak) → tetap tampilkan
+  const assets = {}
+  for (const k of ASSET_KEYS) assets[k] = Number(saved.assets?.[k]) || (fs.existsSync(assetPath(k)) ? 1 : 0)
+  const out = { ...DEFAULT_SETTINGS, ...saved, assets }
+  // nilai bertipe salah (mis. objek di kolom teks) → pakai bawaan agar tampilan tidak error
+  for (const [k, def] of Object.entries(DEFAULT_SETTINGS)) {
+    if (k === 'assets') continue
+    if (typeof def === 'string' && typeof out[k] !== 'string') out[k] = out[k] == null || typeof out[k] === 'object' ? def : String(out[k])
+    if (typeof def === 'number' && !Number.isFinite(Number(out[k]))) out[k] = def
+  }
+  return out
 }
 
 export function saveSettings(patch) {

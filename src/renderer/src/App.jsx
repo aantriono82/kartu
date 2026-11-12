@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { IdCard, Users, Settings as SettingsIcon, DatabaseBackup } from 'lucide-react'
 import { ToastProvider } from './components/ui'
+import ErrorBoundary from './components/ErrorBoundary'
 import Exams from './pages/Exams'
 import Students from './pages/Students'
 import Settings from './pages/Settings'
@@ -40,10 +41,12 @@ export default function App() {
           ))}
         </aside>
         <main className="content">
-          {page === 'exams' && <Exams settings={settings} />}
-          {page === 'students' && <Students />}
-          {page === 'settings' && <Settings settings={settings} onChange={setSettings} />}
-          {page === 'backup' && <Backup onRestored={() => location.reload()} />}
+          <ErrorBoundary key={page}>
+            {page === 'exams' && <Exams settings={settings} />}
+            {page === 'students' && <Students />}
+            {page === 'settings' && <Settings settings={settings} onChange={setSettings} />}
+            {page === 'backup' && <Backup onRestored={() => location.reload()} />}
+          </ErrorBoundary>
         </main>
       </div>
     </ToastProvider>
