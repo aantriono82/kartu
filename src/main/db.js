@@ -36,17 +36,84 @@ CREATE TABLE IF NOT EXISTS participants (
 );
 `
 
-export async function openDb() {
+// Migrasi skema berurutan. JANGAN ubah/hapus migrasi lama — tambahkan di akhir.
+// PRAGMA user_version = jumlah migrasi yang sudah dijalankan.
+const MIGRATIONS = [
+  // v1: skema awal (database lama ber-user_version 0 sudah punya tabel ini → aman karena IF NOT EXISTS)
+  (d) => d.exec(SCHEMA)
+]
+export const DB_VERSION = MIGRATIONS.length
+const REQUIRED_TABLES = ['settings', 'students', 'exams', 'participants']
+
+async function loadSql() {
   if (!SQL) {
     const wasmBinary = fs.readFileSync(require.resolve('sql.js/dist/sql-wasm.wasm'))
     SQL = await initSqlJs({ wasmBinary })
   }
+  return SQL
+}
+
+const userVersion = (d) => d.exec('PRAGMA user_version')[0].values[0][0]
+
+function migrate(d) {
+  const v = userVersion(d)
+  if (v > DB_VERSION) {
+    throw new Error('Data ini dibuat oleh versi aplikasi yang lebih baru. Perbarui aplikasi Kartu Ujian terlebih dahulu.')
+  }
+  for (let i = v; i < DB_VERSION; i++) {
+    d.exec('BEGIN')
+    try {
+      MIGRATIONS[i](d)
+      d.exec(`PRAGMA user_version = ${i + 1}`)
+      d.exec('COMMIT')
+    } catch (e) {
+      d.exec('ROLLBACK')
+      throw new Error(`Migrasi database ke versi ${i + 1} gagal: ${e.message}`)
+    }
+  }
+}
+
+/**
+ * Pastikan isi file adalah database Kartu yang bisa dipakai (untuk restore).
+ * Melempar error yang ramah pengguna jika tidak valid.
+ */
+export async function checkDatabase(buffer) {
+  const S = await loadSql()
+  let d
+  try {
+    d = new S.Database(buffer)
+    const v = userVersion(d) // gagal di sini jika bukan file SQLite
+    if (v > DB_VERSION) throw new Error('Backup ini dibuat oleh versi aplikasi yang lebih baru. Perbarui aplikasi terlebih dahulu.')
+    const tables = d.exec("SELECT name FROM sqlite_master WHERE type = 'table'")[0]?.values.flat() ?? []
+    const missing = REQUIRED_TABLES.filter((t) => !tables.includes(t))
+    if (missing.length) throw new Error('Database di backup tidak lengkap (tabel ' + missing.join(', ') + ' tidak ada)')
+    const ok = d.exec('PRAGMA quick_check')[0]?.values[0][0]
+    if (ok !== 'ok') throw new Error('Database di backup rusak')
+  } catch (e) {
+    if (/file is not a database|malformed/i.test(e.message)) throw new Error('File database di backup rusak atau bukan database Kartu')
+    throw e
+  } finally {
+    d?.close()
+  }
+}
+
+export async function openDb() {
+  await loadSql()
   if (db) db.close()
-  db = fs.existsSync(paths.db) ? new SQL.Database(fs.readFileSync(paths.db)) : new SQL.Database()
-  db.exec('PRAGMA foreign_keys = ON;')
-  db.exec(SCHEMA)
+  db = null
+  const d = fs.existsSync(paths.db) ? new SQL.Database(fs.readFileSync(paths.db)) : new SQL.Database()
+  try {
+    d.exec('PRAGMA foreign_keys = ON;')
+    migrate(d)
+  } catch (e) {
+    d.close()
+    throw e
+  }
+  db = d
   save()
 }
+
+export const isOpen = () => db !== null
 
 export function closeDb() {
   if (db) db.close()
@@ -54,6 +121,7 @@ export function closeDb() {
 }
 
 export function save() {
+  if (!db) return
   const data = db.export()
   // export() resets pragmas on some sql.js versions
   db.exec('PRAGMA foreign_keys = ON;')

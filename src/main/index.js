@@ -2,6 +2,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { pathToFileURL } from 'node:url'
 import { app, BrowserWindow, dialog, ipcMain, nativeImage, net, protocol, shell } from 'electron'
+import * as db from './db'
 import { openDb, save } from './db'
 import { paths, ensureDirs, safeName } from './paths'
 import * as store from './store'
@@ -178,7 +179,7 @@ function registerIpc() {
 
   // backup
   handle('backup:create', async (e) => {
-    const stamp = new Date().toISOString().slice(0, 10)
+    const stamp = exporter.localDate()
     const file = await pickSave(e, `Backup Kartu ${stamp}.zip`, [{ name: 'ZIP', extensions: ['zip'] }])
     if (!file) return null
     await exporter.backup(file)
@@ -188,29 +189,60 @@ function registerIpc() {
   handle('backup:restore', async (e) => {
     const file = await pickOpen(e, { filters: [{ name: 'ZIP', extensions: ['zip'] }] })
     if (!file) return null
-    // simpan data saat ini dulu, untuk berjaga-jaga
-    await exporter.backup(path.join(paths.root, 'sebelum-restore.zip'))
+    // restore() menyimpan data saat ini ke sebelum-restore.zip & mengembalikannya jika gagal
     await exporter.restore(file)
     return file
   })
   handle('app:dataDir', () => paths.root)
   handle('app:openDataDir', () => shell.openPath(paths.root))
+  handle('app:openAutoBackupDir', () => {
+    fs.mkdirSync(exporter.autoBackupDir(), { recursive: true })
+    return shell.openPath(exporter.autoBackupDir())
+  })
 }
 
-app.whenReady().then(async () => {
+function focusMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.show()
+  mainWindow.focus()
+}
+
+async function startup() {
   ensureDirs()
-  await openDb()
+  try {
+    await openDb()
+  } catch (e) {
+    console.error('openDb', e)
+    dialog.showErrorBox(
+      'Kartu Ujian — data tidak bisa dibuka',
+      `${e.message}\n\nFolder data: ${paths.root}\nBackup otomatis ada di subfolder "backup-otomatis".`
+    )
+    app.quit()
+    return
+  }
   registerProtocol()
   registerIpc()
   createWindow()
   // Hook pengujian otomatis (hanya saat pengembangan): KARTU_SMOKE=/path/script.cjs
   if (process.env.KARTU_SMOKE && !app.isPackaged) {
-    require(process.env.KARTU_SMOKE)({ app, nativeImage, store, excel, exporter, paths, removeWhiteBackground, trimImage })
+    require(process.env.KARTU_SMOKE)({ app, nativeImage, db, store, excel, exporter, paths, removeWhiteBackground, trimImage })
       .catch((e) => console.error('SMOKE FAIL', e))
       .finally(() => app.quit())
+    return
   }
+  // Backup harian otomatis, setelah jendela tampil agar tidak memperlambat pembukaan
+  setTimeout(() => exporter.autoBackup().catch((e) => console.error('autoBackup', e)), 3000)
+}
+
+// Hanya satu jendela aplikasi: dua proses yang menulis kartu.db yang sama akan saling menimpa data.
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+} else {
+  app.on('second-instance', focusMainWindow)
+  app.whenReady().then(startup)
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())
-})
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
@@ -219,7 +251,7 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   try {
     save()
-  } catch {
-    /* db mungkin belum terbuka */
+  } catch (e) {
+    console.error('save on quit', e)
   }
 })

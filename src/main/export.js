@@ -4,7 +4,7 @@ import { BrowserWindow, ipcMain } from 'electron'
 import JSZip from 'jszip'
 import { getSettings, getExam, listParticipants } from './store'
 import { paths } from './paths'
-import { closeDb, openDb } from './db'
+import { checkDatabase, closeDb, openDb, save } from './db'
 
 let loadRenderer = null // (win, hash) => Promise
 export function setRendererLoader(fn) {
@@ -115,6 +115,8 @@ export function setRendererPrefs(fn) {
 const rendererPrefs = () => prefsFactory()
 
 // ---------- backup / restore ----------
+const BACKUP_DIRS = () => ({ photos: paths.photos, 'photos-orig': paths.originals, assets: paths.assets })
+
 function addDir(zip, dir, prefix) {
   if (!fs.existsSync(dir)) return
   for (const f of fs.readdirSync(dir)) {
@@ -124,35 +126,98 @@ function addDir(zip, dir, prefix) {
 }
 
 export async function backup(outFile) {
+  save() // pastikan kartu.db di disk paling baru
   const zip = new JSZip()
   zip.file('kartu.db', fs.readFileSync(paths.db))
-  addDir(zip, paths.photos, 'photos')
-  addDir(zip, paths.originals, 'photos-orig')
-  addDir(zip, paths.assets, 'assets')
-  fs.writeFileSync(outFile, await zip.generateAsync({ type: 'nodebuffer', compression: 'STORE' }))
+  for (const [prefix, dir] of Object.entries(BACKUP_DIRS())) addDir(zip, dir, prefix)
+  const tmp = outFile + '.tmp'
+  fs.writeFileSync(tmp, await zip.generateAsync({ type: 'nodebuffer', compression: 'STORE' }))
+  fs.renameSync(tmp, outFile)
 }
 
-export async function restore(file) {
-  const zip = await JSZip.loadAsync(fs.readFileSync(file))
+/** Baca & validasi isi ZIP backup sepenuhnya ke memori, tanpa menyentuh data saat ini. */
+async function readBackup(file) {
+  let zip
+  try {
+    zip = await JSZip.loadAsync(fs.readFileSync(file))
+  } catch {
+    throw new Error('File ini bukan ZIP yang valid atau rusak')
+  }
   if (!zip.file('kartu.db')) throw new Error('File ini bukan backup Kartu (kartu.db tidak ditemukan)')
-  const dirs = { photos: paths.photos, 'photos-orig': paths.originals, assets: paths.assets }
-  // validasi dulu sebelum menghapus data lama
+  const dirs = BACKUP_DIRS()
   const entries = Object.values(zip.files).filter((f) => !f.dir && f.name !== 'kartu.db')
+  const files = []
   for (const f of entries) {
     const [dir, name, extra] = f.name.split('/')
     if (!dirs[dir] || !name || extra !== undefined || !/^[A-Za-z0-9_.-]+$/.test(name) || name.includes('..')) {
       throw new Error('Isi backup tidak valid: ' + f.name)
     }
+    files.push({ dir, name, data: await f.async('nodebuffer') })
   }
+  const db = await zip.file('kartu.db').async('nodebuffer')
+  await checkDatabase(db)
+  return { db, files }
+}
+
+/** Ganti seluruh data dengan isi backup yang sudah divalidasi, lalu buka ulang database. */
+async function applyBackup({ db, files }) {
+  const dirs = BACKUP_DIRS()
   closeDb()
   for (const d of Object.values(dirs)) {
     fs.rmSync(d, { recursive: true, force: true })
     fs.mkdirSync(d, { recursive: true })
   }
-  fs.writeFileSync(paths.db, await zip.file('kartu.db').async('nodebuffer'))
-  for (const f of entries) {
-    const [dir, name] = f.name.split('/')
-    fs.writeFileSync(path.join(dirs[dir], name), await f.async('nodebuffer'))
-  }
+  fs.writeFileSync(paths.db, db)
+  for (const f of files) fs.writeFileSync(path.join(dirs[f.dir], f.name), f.data)
   await openDb()
+}
+
+export const SAFETY_BACKUP = 'sebelum-restore.zip'
+
+export async function restore(file) {
+  const data = await readBackup(file) // gagal di sini → data lama tidak tersentuh
+  const safety = path.join(paths.root, SAFETY_BACKUP)
+  await backup(safety)
+  try {
+    await applyBackup(data)
+  } catch (e) {
+    // kembalikan data lama
+    try {
+      await applyBackup(await readBackup(safety))
+    } catch (e2) {
+      throw new Error(
+        `Restore gagal (${e.message}) dan data lama juga gagal dikembalikan (${e2.message}). ` +
+          `Salinan data lama ada di "${safety}" — restore file itu secara manual.`
+      )
+    }
+    throw new Error('Restore gagal, data lama sudah dikembalikan. Penyebab: ' + e.message)
+  }
+}
+
+// ---------- backup otomatis ----------
+export const AUTO_BACKUP_KEEP = 7
+export const autoBackupDir = () => path.join(paths.root, 'backup-otomatis')
+
+/** Tanggal lokal YYYY-MM-DD (bukan UTC). */
+export function localDate(d = new Date()) {
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+/** Satu backup per hari saat aplikasi dibuka; simpan AUTO_BACKUP_KEEP hari terakhir. */
+export async function autoBackup() {
+  const dir = autoBackupDir()
+  fs.mkdirSync(dir, { recursive: true })
+  const name = `otomatis-${localDate()}.zip`
+  const file = path.join(dir, name)
+  if (!fs.existsSync(file)) await backup(file)
+  const old = fs
+    .readdirSync(dir)
+    .filter((f) => /^otomatis-\d{4}-\d{2}-\d{2}\.zip$/.test(f))
+    .sort()
+    .reverse()
+    .slice(AUTO_BACKUP_KEEP)
+  for (const f of old) fs.rmSync(path.join(dir, f), { force: true })
+  for (const f of fs.readdirSync(dir)) if (f.endsWith('.tmp')) fs.rmSync(path.join(dir, f), { force: true })
+  return file
 }

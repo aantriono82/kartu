@@ -32,8 +32,16 @@ export default function Backup({ onRestored }) {
           <DatabaseBackup size={16} /> Buat Backup
         </button>
 
+        <p className="small">
+          Aplikasi juga membuat <b>backup otomatis</b> sekali sehari saat dibuka (7 hari terakhir disimpan) di subfolder{' '}
+          <span className="mono">backup-otomatis</span>.
+        </p>
+        <button className="btn ghost" onClick={() => window.api.openAutoBackupDir()}>
+          <FolderOpen size={16} /> Buka Backup Otomatis
+        </button>
+
         <h2>Restore</h2>
-        <p>Kembalikan data dari file backup. Bisa juga dipakai untuk memindahkan data ke komputer lain (Windows ↔ Linux).</p>
+        <p>Kembalikan data dari file backup (manual atau otomatis). File diperiksa dulu; jika rusak atau restore gagal, data lama dikembalikan otomatis. Bisa juga dipakai untuk memindahkan data ke komputer lain (Windows ↔ Linux).</p>
         <button className="btn danger" onClick={restore} disabled={busy}>
           <ArchiveRestore size={16} /> Restore dari Backup
         </button>

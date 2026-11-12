@@ -53,6 +53,7 @@ const api = {
   backup: () => call('backup:create'),
   restore: () => call('backup:restore'),
   dataDir: () => call('app:dataDir'),
+  openAutoBackupDir: () => call('app:openAutoBackupDir'),
   openDataDir: () => call('app:openDataDir')
 }
 
