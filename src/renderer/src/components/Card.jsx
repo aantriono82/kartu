@@ -2,7 +2,9 @@ import { Hash, IdCard, User, GraduationCap, DoorOpen, Clock, MapPin, KeyRound, S
 import { FitText, FitBox } from './Fit'
 import { qrPath } from '../lib/qr'
 import { assetUrl, cardTitle, formatNip, photoUrl, qrText } from '../lib/format'
+import { designSize } from '../../../shared/templates'
 import './card.css'
+import './bank.css'
 
 export const CARD_W = 950 // 1 px desain = 0,1 mm
 export const CARD_H = 680
@@ -165,7 +167,7 @@ function BackTerang({ p, settings, exam }) {
         <div className="b-head">
           <FitText size={32} className="b-h1">TATA TERTIB PESERTA UJIAN</FitText>
           <FitText size={19} className="b-h2">
-            {settings.namaSekolah} · {cardTitle(exam).replace('KARTU TANDA PESERTA ', '')}
+            {[settings.namaSekolah, cardTitle(exam).replace('KARTU TANDA PESERTA ', '')].filter(Boolean).join(' · ')}
           </FitText>
         </div>
       </div>
@@ -337,7 +339,7 @@ function BackGelap({ p, settings, exam }) {
         <div className="b-head">
           <FitText size={32} className="b-h1">TATA TERTIB PESERTA UJIAN</FitText>
           <FitText size={19} className="b-h2">
-            {settings.namaSekolah} · {cardTitle(exam).replace('KARTU TANDA PESERTA ', '')}
+            {[settings.namaSekolah, cardTitle(exam).replace('KARTU TANDA PESERTA ', '')].filter(Boolean).join(' · ')}
           </FitText>
         </div>
       </div>
@@ -447,7 +449,7 @@ function BackHijau({ p, settings, exam }) {
         <div className="b-head">
           <FitText size={32} className="b-h1">TATA TERTIB PESERTA UJIAN</FitText>
           <FitText size={19} className="b-h2">
-            {settings.namaSekolah} · {cardTitle(exam).replace('KARTU TANDA PESERTA ', '')}
+            {[settings.namaSekolah, cardTitle(exam).replace('KARTU TANDA PESERTA ', '')].filter(Boolean).join(' · ')}
           </FitText>
         </div>
       </div>
@@ -561,7 +563,7 @@ function BackIndigo({ p, settings, exam }) {
         <div className="b-head">
           <FitText size={32} className="b-h1">TATA TERTIB PESERTA UJIAN</FitText>
           <FitText size={19} className="b-h2">
-            {settings.namaSekolah} · {cardTitle(exam).replace('KARTU TANDA PESERTA ', '')}
+            {[settings.namaSekolah, cardTitle(exam).replace('KARTU TANDA PESERTA ', '')].filter(Boolean).join(' · ')}
           </FitText>
         </div>
       </div>
@@ -571,30 +573,301 @@ function BackIndigo({ p, settings, exam }) {
   )
 }
 
+// ======================= TEMPLATE KARTU BANK =======================
+// Gaya kartu kredit/debit: chip, nomor besar ber-emboss, pola guilloche. Dua ukuran: 95 × 68 mm dan ATM 85,6 × 54 mm.
+// Posisi (px desain, 1 px = 0,1 mm) per ukuran; tata letak sama, hanya skala & ruang yang berbeda.
+const BANK_LAYOUT = {
+  std: {
+    pad: 44,
+    logo: 100,
+    logoTop: 22,
+    head: [42, 20],
+    chip: [48, 168, 116],
+    nopes: [48, 300, 640, 64],
+    info: [48, 410, 640, 15, 30],
+    nama: [48, 52, 640, 42], // [x, jarak dari bawah, lebar, ukuran]
+    photo: [724, 158, 186],
+    qr: 132, // lebar kotak QR (px desain); ±12 mm
+    back: { stripe: [44, 96], sigTop: 168, sigH: 116, cvvW: 176, holoW: 146, lowerTop: 380, rules: 19, acc: 30 }
+  },
+  atm: {
+    pad: 36,
+    logo: 78,
+    logoTop: 18,
+    head: [34, 16.5],
+    chip: [40, 126, 96],
+    nopes: [40, 228, 580, 54],
+    info: [40, 316, 580, 12.5, 25],
+    nama: [40, 40, 580, 34],
+    photo: [670, 118, 150],
+    qr: 112,
+    back: { stripe: [34, 80], sigTop: 140, sigH: 92, cvvW: 140, holoW: 116, lowerTop: 300, rules: 16, acc: 24 }
+  }
+}
+
+const bankLayout = (template) => BANK_LAYOUT[template === 'bank_atm' ? 'atm' : 'std']
+const bankClass = (template, settings, back) =>
+  `card bank ${template === 'bank_atm' ? 'bank-atm' : 'bank-std'} bank-${settings.bankWarna || 'navy'}${back ? ' back' : ''}`
+
+/** Nomor peserta dikelompokkan 4 digit seperti nomor kartu. */
+export function groupNumber(v) {
+  const s = String(v ?? '').trim()
+  if (!/^\d{5,}$/.test(s)) return s || '-'
+  return s.replace(/(\d{4})(?=\d)/g, '$1 ')
+}
+
+// Pola guilloche (garis halus berombak seperti uang kertas), dihitung sekali per ukuran.
+const guillocheCache = new Map()
+function guillochePaths(w, h) {
+  const key = w + 'x' + h
+  if (guillocheCache.has(key)) return guillocheCache.get(key)
+  const out = []
+  const cx = w * 0.78
+  const cy = h * 0.62
+  for (let k = 0; k < 22; k++) {
+    const r0 = h * 0.12 + k * h * 0.035
+    let d = ''
+    for (let i = 0; i <= 360; i++) {
+      const t = (i / 360) * Math.PI * 2
+      const r = r0 + h * 0.018 * Math.sin(12 * t + k * 0.55) + h * 0.008 * Math.sin(5 * t - k)
+      d += (i ? 'L' : 'M') + (cx + r * Math.cos(t)).toFixed(1) + ' ' + (cy + r * Math.sin(t)).toFixed(1)
+    }
+    out.push(d + 'Z')
+  }
+  for (let k = 0; k < 14; k++) {
+    const y0 = h * 0.08 + k * h * 0.065
+    let d = ''
+    for (let i = 0; i <= 120; i++) {
+      const x = (i / 120) * w
+      const y = y0 + h * 0.022 * Math.sin((x / w) * Math.PI * 6 + k * 0.7) + h * 0.01 * Math.sin((x / w) * Math.PI * 17)
+      d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1)
+    }
+    out.push(d)
+  }
+  guillocheCache.set(key, out)
+  return out
+}
+
+function BankBg({ template }) {
+  const { w, h } = designSize(template)
+  return (
+    <svg className="bk-bg" width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <g className="bk-guilloche" fill="none" strokeWidth="1.1">
+        {guillochePaths(w, h).map((d, i) => (
+          <path key={i} d={d} />
+        ))}
+      </g>
+    </svg>
+  )
+}
+
+function Chip({ size }) {
+  const h = size * 0.76
+  return (
+    <svg className="bk-chip" width={size} height={h} viewBox="0 0 100 76">
+      <defs>
+        <linearGradient id="bk-gold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#f6e27a" />
+          <stop offset=".45" stopColor="#d4a93c" />
+          <stop offset=".7" stopColor="#f3d77a" />
+          <stop offset="1" stopColor="#b8862b" />
+        </linearGradient>
+      </defs>
+      <rect x="1" y="1" width="98" height="74" rx="12" fill="url(#bk-gold)" stroke="#8a6420" strokeWidth="1.5" />
+      <g fill="none" stroke="#8a6420" strokeWidth="2" strokeOpacity=".75">
+        <path d="M1 26 H32 M1 50 H32 M68 26 H99 M68 50 H99 M50 1 V18 M50 58 V75" />
+        <rect x="32" y="18" width="36" height="40" rx="7" />
+      </g>
+    </svg>
+  )
+}
+
+function Contactless({ size }) {
+  return (
+    <svg className="bk-nfc" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M8.5 9.5a3.5 3.5 0 0 1 0 5" />
+      <path d="M12 7a7 7 0 0 1 0 10" />
+      <path d="M15.5 4.5a10.5 10.5 0 0 1 0 15" />
+      <path d="M5.2 11.2a1 1 0 0 1 0 1.6" />
+    </svg>
+  )
+}
+
+/** Kop: logo kabupaten (kiri) – nama sekolah & judul – logo sekolah (kanan), sejajar tengah. */
+function BankTop({ settings, exam, L }) {
+  const box = { width: L.logo, height: L.logo }
+  return (
+    <div className="bk-top" style={{ left: L.pad - 8, right: L.pad - 8, top: L.logoTop, height: L.logo }}>
+      <div className="bk-logo" style={box}>
+        <LogoSlot src={assetUrl(settings, 'logoKab')} label="LOGO KAB" />
+      </div>
+      <div className="bk-head">
+        <FitText size={L.head[0]} className="bk-school">{settings.namaSekolah}</FitText>
+        <FitText size={L.head[1]} className="bk-title">{cardTitle(exam)}</FitText>
+      </div>
+      <div className="bk-logo" style={box}>
+        <LogoSlot src={assetUrl(settings, 'logoSekolah')} label="LOGO SEKOLAH" />
+      </div>
+    </div>
+  )
+}
+
+function FrontBank({ p, settings, exam, template }) {
+  const L = bankLayout(template)
+  const [nx, ny, nw, ns] = L.nopes
+  const [ix, iy, iw, il, iv] = L.info
+  const [mx, my, mw, ms] = L.nama
+  const [px, py, pw] = L.photo
+  const info = [
+    ['NO. URUT', p.no_urut],
+    ['KELAS', p.kelas],
+    ['RUANG', p.ruang],
+    ['SESI', p.sesi]
+  ]
+  return (
+    <div className={bankClass(template, settings)}>
+      <BankBg template={template} />
+      <div className="bk-sheen" />
+      <BankTop settings={settings} exam={exam} L={L} />
+
+      <div className="bk-chiprow" style={{ left: L.chip[0], top: L.chip[1] }}>
+        <Chip size={L.chip[2]} />
+        <Contactless size={L.chip[2] * 0.46} />
+      </div>
+
+      <div style={{ left: nx, top: ny, width: nw }}>
+        <div className="bk-cap" style={{ fontSize: il }}>NOMOR PESERTA</div>
+        <FitText size={ns} min={ns * 0.5} className="bk-emboss bk-nopes">
+          {groupNumber(p.nomor_peserta)}
+        </FitText>
+      </div>
+
+      <div className="bk-info" style={{ left: ix, top: iy, width: iw }}>
+        {info.map(([label, v]) => (
+          <div key={label}>
+            <div className="bk-cap" style={{ fontSize: il }}>{label}</div>
+            <FitText size={iv} min={iv * 0.5} className="bk-emboss bk-mono">{v || '-'}</FitText>
+          </div>
+        ))}
+      </div>
+
+      {/* ditambatkan ke bawah: nama panjang (2 baris) tumbuh ke atas */}
+      <div style={{ left: mx, bottom: my, width: mw }}>
+        <div className="bk-cap" style={{ fontSize: il }}>NAMA PESERTA</div>
+        <FitText size={ms} min={ms * 0.45} lines={2} className="bk-emboss bk-name">
+          {String(p.nama || '-').toUpperCase()}
+        </FitText>
+      </div>
+
+      <div className="bk-photo" style={{ left: px, top: py, width: pw, height: (pw * 4) / 3 }}>
+        <Photo p={p} />
+      </div>
+      <div className="bk-qr" style={{ left: px, top: py + (pw * 4) / 3 + 16, width: pw }}>
+        <Qr text={qrText(p, settings, exam)} size={L.qr - 12} />
+      </div>
+    </div>
+  )
+}
+
+function BackBank({ p, settings, template }) {
+  const L = bankLayout(template)
+  const B = L.back
+  const { w } = designSize(template)
+  const pad = L.pad
+  const cvvX = w - pad - B.holoW - 18 - B.cvvW
+  const sigW = cvvX - 18 - pad
+  const rules = String(settings.tataTertib || '')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  const accW = Math.round((w - pad * 2) * 0.36)
+  const logo = assetUrl(settings, 'logoSekolah')
+  return (
+    <div className={bankClass(template, settings, true)}>
+      <BankBg template={template} />
+      <div className="bk-stripe" style={{ top: B.stripe[0], height: B.stripe[1] }} />
+
+      <div className="bk-cap" style={{ left: pad, top: B.sigTop - 22, fontSize: B.rules * 0.68 }}>
+        TANDA TANGAN KEPALA SEKOLAH
+      </div>
+      <div className="bk-sigpanel" style={{ left: pad, top: B.sigTop, width: sigW, height: B.sigH }}>
+        <Signature settings={settings} height={B.sigH - 8} />
+      </div>
+      <div className="bk-kepsek" style={{ left: pad, top: B.sigTop + B.sigH + 8, width: sigW }}>
+        <FitText size={B.rules * 1.05} min={9} className="bk-kepsek-name">{settings.kepalaSekolah}</FitText>
+        <FitText size={B.rules * 0.82} min={8}>{settings.nip ? 'NIP. ' + formatNip(settings.nip) : ''}</FitText>
+      </div>
+
+      <div className="bk-cap" style={{ left: cvvX, top: B.sigTop - 22, fontSize: B.rules * 0.68 }}>
+        PASSWORD
+      </div>
+      <div className="bk-cvv" style={{ left: cvvX, top: B.sigTop, width: B.cvvW, height: B.sigH }}>
+        <FitText size={B.acc * 1.1} min={10}>{p.password || '-'}</FitText>
+      </div>
+
+      <div className="bk-holo" style={{ left: w - pad - B.holoW, top: B.sigTop - 8, width: B.holoW, height: B.sigH + 16 }}>
+        {logo && <img src={logo} alt="" draggable={false} />}
+      </div>
+
+      <div className="bk-rules" style={{ left: pad, top: B.lowerTop, width: w - pad * 3 - accW, bottom: pad }}>
+        <div className="bk-rules-title" style={{ fontSize: B.rules * 1.05 }}>TATA TERTIB PESERTA UJIAN</div>
+        <FitBox size={B.rules} min={8} className="bk-rules-body" deps={[settings.tataTertib, template]}>
+          <ol>
+            {rules.map((r, i) => (
+              <li key={i}>{r}</li>
+            ))}
+          </ol>
+        </FitBox>
+      </div>
+
+      <div className="bk-acc" style={{ right: pad, top: B.lowerTop, width: accW, bottom: pad }}>
+        <div className="bk-cap" style={{ fontSize: B.rules * 0.72 }}>
+          <ShieldCheck size={B.rules} strokeWidth={2.4} /> AKUN UJIAN · USERNAME
+        </div>
+        <FitText size={B.acc} min={10} className="bk-mono bk-acc-user">{p.username || '-'}</FitText>
+        <FitText size={B.rules * 0.95} min={8} lines={2} className="bk-acc-name">{p.nama}</FitText>
+        <FitText size={B.rules * 0.8} min={8} className="bk-acc-sub">
+          {[p.nomor_peserta && 'No. ' + p.nomor_peserta, settings.namaSekolah].filter(Boolean).join(' · ')}
+        </FitText>
+        <div className="bk-acc-note" style={{ fontSize: B.rules * 0.72 }}>Jaga kerahasiaan username &amp; password.</div>
+      </div>
+      <div className="bk-backfoot" style={{ fontSize: B.rules * 0.62, left: pad, right: pad, bottom: pad * 0.35, top: 'auto' }}>
+        Kartu ini milik {settings.namaSekolah}. Jika ditemukan, harap kembalikan ke sekolah.
+      </div>
+    </div>
+  )
+}
+
 export const TEMPLATE_OPTIONS = [
   ['terang', 'Terang (hemat tinta)'],
   ['gelap', 'Gelap'],
   ['hijau', 'Hijau Resmi (hemat tinta)'],
-  ['indigo', 'Indigo (foto & TTD berdampingan)']
+  ['indigo', 'Indigo (foto & TTD berdampingan)'],
+  ['bank', 'Kartu Bank 95 × 68 mm'],
+  ['bank_atm', 'Kartu Bank ukuran ATM 85,6 × 54 mm']
 ]
 
 const TEMPLATES = {
   terang: { front: FrontTerang, back: BackTerang },
   gelap: { front: FrontGelap, back: BackGelap },
   hijau: { front: FrontHijau, back: BackHijau },
-  indigo: { front: FrontIndigo, back: BackIndigo }
+  indigo: { front: FrontIndigo, back: BackIndigo },
+  bank: { front: FrontBank, back: BackBank },
+  bank_atm: { front: FrontBank, back: BackBank }
 }
 
-/** Renders a card at design size (950×680 px). */
+/** Renders a card at design size (950×680 px; ukuran ATM 856×540 px). */
 export function Card({ template = 'terang', side = 'front', ...props }) {
-  const C = (TEMPLATES[template] || TEMPLATES.terang)[side === 'back' ? 'back' : 'front']
-  return <C {...props} />
+  const t = TEMPLATES[template] ? template : 'terang'
+  const C = TEMPLATES[t][side === 'back' ? 'back' : 'front']
+  return <C template={t} {...props} />
 }
 
 /** Card scaled to a box; width can be px number or CSS length (e.g. "95mm"). */
 export function ScaledCard({ scale, width, height, ...props }) {
+  const size = designSize(props.template)
   return (
-    <div className="card-box" style={{ width: width ?? CARD_W * scale, height: height ?? CARD_H * scale }}>
+    <div className="card-box" style={{ width: width ?? size.w * scale, height: height ?? size.h * scale }}>
       <div className="card-scale" style={{ transform: `scale(${scale})` }}>
         <Card {...props} />
       </div>

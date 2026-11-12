@@ -17,7 +17,15 @@ const NAV = [
 export default function App() {
   const [page, setPage] = useState('exams')
   const [settings, setSettings] = useState(null)
-  const reloadSettings = useCallback(() => window.api.getSettings().then(setSettings), [])
+  const reloadSettings = useCallback(
+    () =>
+      window.api.getSettings().then((s) => {
+        setSettings(s)
+        // instalasi baru (data sekolah belum diisi): langsung buka Pengaturan Sekolah
+        setPage((p) => (p === 'exams' && !s.namaSekolah?.trim() ? 'settings' : p))
+      }),
+    []
+  )
   useEffect(() => {
     reloadSettings()
   }, [reloadSettings])
@@ -31,7 +39,7 @@ export default function App() {
             <IdCard size={26} />
             <div>
               <b>Kartu Ujian</b>
-              <small>{settings.namaSekolah}</small>
+              <small>{settings.namaSekolah || 'Sekolah belum diatur'}</small>
             </div>
           </div>
           {NAV.map(([key, label, Icon]) => (

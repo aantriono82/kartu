@@ -25,6 +25,26 @@
 .card * {
   box-sizing: border-box;
 }
+/* Sudut membulat + border di sekeliling kartu (depan & belakang, semua template).
+   Border berupa lapisan di atas tepi, jadi isi kartu tidak bergeser. */
+.card {
+  --card-radius: 32px; /* 3,2 mm */
+  --card-border: 5px solid #d4a72c; /* emas: gelap, hijau, indigo, kartu bank */
+  border-radius: var(--card-radius);
+}
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: var(--card-border);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 50;
+}
+/* latar putih: emas tampak kusam saat dicetak → pakai warna utama template */
+.terang {
+  --card-border: 5px solid #0d3a8c;
+}
 .card > * {
   position: absolute;
 }

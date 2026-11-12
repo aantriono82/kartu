@@ -7,6 +7,9 @@ import '@fontsource/poppins/800.css'
 import '@fontsource/roboto-condensed/400.css'
 import '@fontsource/roboto-condensed/700.css'
 import '@fontsource/roboto-condensed/800.css'
+import '@fontsource/space-mono/400.css'
+import '@fontsource/space-mono/700.css'
+import '@fontsource/space-mono/700-italic.css'
 import './app.css'
 import App from './App'
 import PrintView from './pages/PrintView'
@@ -21,7 +24,10 @@ const FONTS = [
   '800 16px Poppins',
   '400 16px "Roboto Condensed"',
   '700 16px "Roboto Condensed"',
-  '800 16px "Roboto Condensed"'
+  '800 16px "Roboto Condensed"',
+  '400 16px "Space Mono"',
+  '700 16px "Space Mono"',
+  'italic 700 16px "Space Mono"'
 ]
 
 function route() {

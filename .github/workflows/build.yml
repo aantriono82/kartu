@@ -8,7 +8,7 @@ on:
   pull_request:
 
 jobs:
-  # Uji otomatis (import Excel, PDF/PNG 4 template, backup/restore) — installer hanya dibuat jika lulus
+  # Uji otomatis (import Excel, PDF/PNG 6 template, backup/restore) — installer hanya dibuat jika lulus
   test:
     runs-on: ubuntu-latest
     steps:

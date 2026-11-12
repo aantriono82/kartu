@@ -4,6 +4,7 @@ import { BrowserWindow, ipcMain } from 'electron'
 import JSZip from 'jszip'
 import { getSettings, getExam, listParticipants } from './store'
 import { paths } from './paths'
+import { designSize } from '../shared/templates'
 import { checkDatabase, closeDb, openDb, save } from './db'
 
 let loadRenderer = null // (win, hash) => Promise
@@ -63,9 +64,10 @@ export async function renderPdf(job, outFile) {
 
 /** Renders each card into a PNG and writes a ZIP. */
 export async function renderPngZip(job, outFile, onProgress) {
-  const SCALE = 2 // 950x680 design px -> 1900x1360 PNG (~500 dpi)
-  const width = 950 * SCALE
-  const height = 680 * SCALE
+  const SCALE = 2 // 1 px desain = 0,1 mm -> PNG ~500 dpi (95×68 mm = 1900×1360)
+  const size = designSize(job.examId ? getExam(job.examId)?.template : null)
+  const width = size.w * SCALE
+  const height = size.h * SCALE
   const win = new BrowserWindow({
     show: false,
     width,

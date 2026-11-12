@@ -1,6 +1,6 @@
 # Kartu Ujian
 
-Aplikasi desktop offline untuk membuat kartu peserta ujian sekolah (PDF A4 8 kartu/lembar + PNG per siswa).
+Aplikasi desktop offline untuk membuat kartu peserta ujian sekolah (PDF A4 8 kartu/lembar — 10 untuk ukuran ATM — + PNG per siswa). Template: Terang, Gelap, Hijau Resmi, Indigo, dan Kartu Bank (95 × 68 mm atau ukuran ATM 85,6 × 54 mm).
 Spesifikasi lengkap: [SPEC.md](SPEC.md).
 
 ## Pengembangan
@@ -48,7 +48,7 @@ Update: pasang .deb versi baru dengan cara yang sama. Hapus: `sudo apt remove ka
 ```bash
 npm test             # di Linux tanpa layar: xvfb-run -a npm test
 ```
-Menjalankan smoke test (import Excel, PDF/PNG 4 template) dan uji backup/restore di dalam Electron.
+Menjalankan smoke test (import Excel, PDF/PNG 6 template) dan uji backup/restore di dalam Electron.
 Juga dijalankan GitHub Actions di setiap push; installer hanya dibuat jika lulus.
 
 Smoke test manual dengan data sekolah asli:

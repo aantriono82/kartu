@@ -33,13 +33,13 @@ export const uniqueSorted = (arr) => [...new Set(arr.filter(Boolean))].sort(nat)
 
 export const SAMPLE_PARTICIPANT = {
   nisn: '0101234567',
-  nama: 'AGENG FEBRIAN',
+  nama: 'NARUTI UZUKIMI',
   kelas: 'IX.1',
   no_urut: '2',
   nomor_peserta: '10801923',
   ruang: '1',
   sesi: '1',
-  username: 'smp2-10801923',
+  username: 'peserta-10801923',
   password: 'ab12cd',
   has_photo: 0
 }

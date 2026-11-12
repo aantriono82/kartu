@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Upload, Trash2, Save } from 'lucide-react'
 import { ScaledCard, TEMPLATE_OPTIONS } from '../components/Card'
+import { BANK_COLORS } from '../../../shared/templates'
 import { Field, useAction } from '../components/ui'
 import { assetUrl, formatNip, nipValid, SAMPLE_PARTICIPANT } from '../lib/format'
 
 const TEXT_FIELDS = [
-  ['pemerintah', 'Baris 1 – Pemerintah', 'Template terang & hijau'],
-  ['dinas', 'Baris 2 – Dinas', 'Semua template'],
-  ['uptd', 'Baris 3 – UPTD', 'Template terang'],
-  ['namaSekolah', 'Nama Sekolah', 'Semua template'],
-  ['wilayah', 'Wilayah', 'Template gelap, mis. KABUPATEN LAMPUNG TENGAH'],
-  ['alamat', 'Alamat', '']
+  ['pemerintah', 'Baris 1 – Pemerintah', 'Template terang & hijau', 'PEMERINTAH KABUPATEN ...'],
+  ['dinas', 'Baris 2 – Dinas', 'Semua template', 'DINAS PENDIDIKAN DAN KEBUDAYAAN'],
+  ['uptd', 'Baris 3 – UPTD', 'Template terang', 'UPTD SATUAN PENDIDIKAN'],
+  ['namaSekolah', 'Nama Sekolah', 'Semua template', 'SMP NEGERI ...'],
+  ['wilayah', 'Wilayah', 'Template gelap', 'KABUPATEN ...'],
+  ['alamat', 'Alamat', '', 'Jl. ..., Kec. ..., Kab. ...']
 ]
 
 const ASSETS = [
@@ -67,27 +68,43 @@ export default function Settings({ settings, onChange }) {
         </button>
       </div>
 
+      {!settings.namaSekolah?.trim() && (
+        <div className="panel notice">
+          <b>Selamat datang!</b> Isi data sekolah, kepala sekolah, dan gambar (logo, tanda tangan, stempel) di bawah ini, lalu klik{' '}
+          <b>Simpan</b>.
+        </div>
+      )}
+
       <div className="settings-grid">
         <div className="panel">
           <h2>Kop Kartu</h2>
-          {TEXT_FIELDS.map(([k, label, hint]) => (
+          {TEXT_FIELDS.map(([k, label, hint, ph]) => (
             <Field key={k} label={label} hint={hint}>
-              <input value={form[k]} onChange={set(k)} />
+              <input value={form[k]} onChange={set(k)} placeholder={ph} />
             </Field>
           ))}
+          <Field label="Warna Kartu Bank" hint="Untuk template Kartu Bank (kedua ukuran). Platinum paling hemat tinta.">
+            <select value={form.bankWarna || 'navy'} onChange={set('bankWarna')}>
+              {BANK_COLORS.map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </Field>
           <h2>Kepala Sekolah</h2>
           <Field label="Nama & gelar">
-            <input value={form.kepalaSekolah} onChange={set('kepalaSekolah')} />
+            <input value={form.kepalaSekolah} onChange={set('kepalaSekolah')} placeholder="NAMA LENGKAP, S.Pd., M.Pd." />
           </Field>
           <Field
             label="NIP"
             error={!nipValid(form.nip) ? 'NIP PNS harus 18 digit' : null}
             hint={form.nip ? 'Tercetak: NIP. ' + formatNip(form.nip) : 'Kosongkan jika tidak ada'}
           >
-            <input value={form.nip} onChange={set('nip')} placeholder="19710720 199702 2 002" />
+            <input value={form.nip} onChange={set('nip')} placeholder="18 digit, mis. 19800101 200501 1 001" />
           </Field>
           <Field label="Tempat & tanggal (opsional)" hint="Template Indigo, di atas tulisan Kepala Sekolah. Kosongkan jika tidak perlu.">
-            <input value={form.tempatTanggal || ''} onChange={set('tempatTanggal')} placeholder="Bangunrejo, Mei 2026" />
+            <input value={form.tempatTanggal || ''} onChange={set('tempatTanggal')} placeholder="Nama Kota, Mei 2026" />
           </Field>
 
           <h2>Gambar</h2>
@@ -125,10 +142,10 @@ export default function Settings({ settings, onChange }) {
             <textarea rows={8} value={form.tataTertib} onChange={set('tataTertib')} />
           </Field>
 
-          <h2>Tata Letak Cetak (A4, 8 kartu)</h2>
+          <h2>Tata Letak Cetak (A4: 8 kartu, ukuran ATM 10 kartu)</h2>
           <Slider label="Jarak antarkartu" unit=" mm" min={0} max={5} step={0.5} value={form.cardGap} onChange={set('cardGap')} />
           <p className="muted small">
-            Ada garis potong putus-putus tipis di celah antarkartu. Isi 0 jika kartu ingin dicetak rapat (satu kali potong di antara dua
+            Ukuran ATM maksimal 4 mm. Ada garis potong putus-putus tipis di celah antarkartu. Isi 0 jika kartu ingin dicetak rapat (satu kali potong di antara dua
             kartu).
           </p>
 

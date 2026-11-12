@@ -2,17 +2,20 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { all, get, run, tx, save } from './db'
 import { paths, safeName } from './paths'
+import { TEMPLATE_IDS, BANK_COLORS } from '../shared/templates'
 
+// Instalasi baru dimulai kosong: data sekolah diisi sendiri di Pengaturan Sekolah.
 export const DEFAULT_SETTINGS = {
-  pemerintah: 'PEMERINTAH KABUPATEN LAMPUNG TENGAH',
-  dinas: 'DINAS PENDIDIKAN DAN KEBUDAYAAN',
-  uptd: 'UPTD SATUAN PENDIDIKAN',
-  namaSekolah: 'SMP NEGERI 2 BANGUNREJO',
-  wilayah: 'KABUPATEN LAMPUNG TENGAH',
-  alamat: 'Jl. Sinarjaya-Sinarluas, Kec. Bangunrejo, Lampung Tengah',
-  kepalaSekolah: 'EVI OKTAVIA, S.Pd., M.Pd.',
+  pemerintah: '',
+  dinas: '',
+  uptd: '',
+  namaSekolah: '',
+  wilayah: '',
+  alamat: '',
+  kepalaSekolah: '',
   nip: '',
-  tempatTanggal: '', // mis. "Bangunrejo, Mei 2026" (template indigo)
+  tempatTanggal: '', // mis. "Nama Kota, Mei 2026" (template indigo)
+  bankWarna: 'navy', // warna template Kartu Bank
   tataTertib: [
     'Peserta hadir di sekolah 15 menit sebelum ujian dimulai.',
     'Peserta wajib membawa kartu ini dan menunjukkannya kepada pengawas.',
@@ -69,6 +72,7 @@ export function saveSettings(patch) {
   const next = { ...getSettings(), ...patch }
   next.offsetX = Number(next.offsetX) || 0
   next.offsetY = Number(next.offsetY) || 0
+  if (!BANK_COLORS.some(([v]) => v === next.bankWarna)) next.bankWarna = DEFAULT_SETTINGS.bankWarna
   for (const k of ['cardGap', 'ttdScale', 'stempelScale', 'stempelX', 'stempelY']) {
     const n = Number(next[k])
     next[k] = Number.isFinite(n) ? n : DEFAULT_SETTINGS[k]
@@ -175,7 +179,7 @@ export function listExams() {
 
 export function saveExam({ id, nama, tahun, template }) {
   if (!String(nama ?? '').trim()) throw new Error('Nama ujian wajib diisi')
-  template = ['gelap', 'hijau', 'indigo'].includes(template) ? template : 'terang'
+  template = TEMPLATE_IDS.includes(template) ? template : 'terang'
   if (id) {
     run('UPDATE exams SET nama = ?, tahun = ?, template = ? WHERE id = ?', [nama.trim(), String(tahun ?? '').trim(), template, id])
     save()

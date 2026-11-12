@@ -1,23 +1,26 @@
 import { useEffect, useState } from 'react'
-import { ScaledCard, CARD_W } from '../components/Card'
+import { ScaledCard } from '../components/Card'
+import { cardSpec } from '../../../shared/templates'
 import { waitForAssets } from '../lib/ready'
 import './print.css'
 
-// A4 potret, 2 kolom × 4 baris, kartu 95 × 68 mm
+// A4 potret. Kartu 95 × 68 mm: 2 kolom × 4 baris; ukuran ATM 85,6 × 54 mm: 2 kolom × 5 baris.
 export const PAGE = { w: 210, h: 297 }
-export const CARD_MM = { w: 95, h: 68 }
-export const GRID = { cols: 2, rows: 4 }
-export const MAX_GAP = 5 // mm; lebih dari ini margin atas/bawah terlalu sempit untuk printer
-const PER_PAGE = GRID.cols * GRID.rows
 const MM_TO_PX = 96 / 25.4
-const SCALE = (CARD_MM.w * MM_TO_PX) / CARD_W
+const SCALE = MM_TO_PX / 10 // 1 px desain = 0,1 mm
 
-/** Tata letak lembar (mm) untuk jarak antarkartu tertentu. Kartu selalu di tengah halaman. */
-export function makeLayout(settings) {
-  const gap = Math.min(MAX_GAP, Math.max(0, Number(settings.cardGap) || 0))
-  const usedW = CARD_MM.w * GRID.cols + gap * (GRID.cols - 1)
-  const usedH = CARD_MM.h * GRID.rows + gap * (GRID.rows - 1)
+/** Tata letak lembar (mm) untuk template & jarak antarkartu tertentu. Kartu selalu di tengah halaman. */
+export function makeLayout(settings, template) {
+  const spec = cardSpec(template)
+  const card = { w: spec.w, h: spec.h }
+  const grid = { cols: spec.cols, rows: spec.rows }
+  const gap = Math.min(spec.maxGap, Math.max(0, Number(settings.cardGap) || 0))
+  const usedW = card.w * grid.cols + gap * (grid.cols - 1)
+  const usedH = card.h * grid.rows + gap * (grid.rows - 1)
   return {
+    card,
+    grid,
+    perPage: grid.cols * grid.rows,
     gap,
     margin: { x: (PAGE.w - usedW) / 2, y: (PAGE.h - usedH) / 2 },
     offset: { x: Number(settings.offsetX) || 0, y: Number(settings.offsetY) || 0 }
@@ -26,19 +29,19 @@ export function makeLayout(settings) {
 
 /** Posisi slot (mm). Halaman belakang dicerminkan kiri-kanan (kertas dibalik pada sisi panjang). */
 export function slotPos(i, back, layout) {
-  const row = Math.floor(i / GRID.cols)
-  let col = i % GRID.cols
-  if (back) col = GRID.cols - 1 - col
-  const { margin, gap, offset } = layout
+  const { margin, gap, offset, card, grid } = layout
+  const row = Math.floor(i / grid.cols)
+  let col = i % grid.cols
+  if (back) col = grid.cols - 1 - col
   return {
-    x: margin.x + col * (CARD_MM.w + gap) + (back ? offset.x : 0),
-    y: margin.y + row * (CARD_MM.h + gap) + (back ? offset.y : 0)
+    x: margin.x + col * (card.w + gap) + (back ? offset.x : 0),
+    y: margin.y + row * (card.h + gap) + (back ? offset.y : 0)
   }
 }
 
 /** Tanda potong di margin luar, di setiap tepi kartu. */
 function CropMarks({ layout }) {
-  const { margin, gap } = layout
+  const { margin, gap, card: CARD_MM, grid: GRID } = layout
   const L = Math.min(5, margin.y - 1.5) // panjang tanda (mm)
   const xs = []
   const ys = []
@@ -79,8 +82,8 @@ function Sheet({ items, side, data, layout }) {
           <div key={p.id} className={'slot' + (!back && layout.gap > 0 ? ' slot-cutline' : '')} style={{ left: pos.x + 'mm', top: pos.y + 'mm' }}>
             <ScaledCard
               scale={SCALE}
-              width={CARD_MM.w + 'mm'}
-              height={CARD_MM.h + 'mm'}
+              width={layout.card.w + 'mm'}
+              height={layout.card.h + 'mm'}
               template={data.exam?.template}
               side={side}
               p={p}
@@ -98,13 +101,13 @@ function CalibrationSheet({ back, layout }) {
   return (
     <div className="sheet">
       <CropMarks layout={layout} />
-      {Array.from({ length: PER_PAGE }, (_, i) => {
+      {Array.from({ length: layout.perPage }, (_, i) => {
         const pos = slotPos(i, back, layout)
         return (
           <div
             key={i}
             className={'calib ' + (back ? 'calib-back' : '')}
-            style={{ left: pos.x + 'mm', top: pos.y + 'mm', width: CARD_MM.w + 'mm', height: CARD_MM.h + 'mm' }}
+            style={{ left: pos.x + 'mm', top: pos.y + 'mm', width: layout.card.w + 'mm', height: layout.card.h + 'mm' }}
           >
             <div className="calib-cross" />
             <div className="calib-label">
@@ -145,7 +148,7 @@ export default function PrintView({ job }) {
 
   if (error) return <div>{error}</div>
   if (!data) return null
-  const layout = makeLayout(data.settings)
+  const layout = makeLayout(data.settings, data.exam?.template)
 
   if (job.side === 'calib') {
     return (
@@ -157,7 +160,8 @@ export default function PrintView({ job }) {
   }
 
   const pages = []
-  for (let i = 0; i < data.participants.length; i += PER_PAGE) pages.push(data.participants.slice(i, i + PER_PAGE))
+  const per = layout.perPage
+  for (let i = 0; i < data.participants.length; i += per) pages.push(data.participants.slice(i, i + per))
   return (
     <div className="print-root">
       {pages.map((items, i) => (

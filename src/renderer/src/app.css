@@ -619,3 +619,11 @@ h3.sub {
   white-space: pre-wrap;
   margin: 12px 0 16px;
 }
+
+/* sambutan instalasi baru (Pengaturan Sekolah masih kosong) */
+.panel.notice {
+  margin-bottom: 16px;
+  background: #fff8e1;
+  border: 1px solid #f2d27a;
+  color: #5c4500;
+}

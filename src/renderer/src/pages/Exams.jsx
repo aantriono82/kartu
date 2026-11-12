@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2, FileSpreadsheet, Download, FileText, Image, Crosshair, Pencil, Search, Save } from 'lucide-react'
 import { ScaledCard, TEMPLATE_OPTIONS } from '../components/Card'
+import { cardSpec } from '../../../shared/templates'
 import { Field, ImportResult, Modal, useAction, useToast } from '../components/ui'
 import { uniqueSorted } from '../lib/format'
 import { duplicateSummary, findDuplicates } from '../lib/check'
@@ -382,7 +383,7 @@ function ExamDetail({ exam, settings, onChanged }) {
             )}
           </div>
           <p className="muted small">
-            {printSet.length} kartu · {Math.ceil(printSet.length / 8)} lembar A4
+            {printSet.length} kartu · {Math.ceil(printSet.length / (cardSpec(form.template).cols * cardSpec(form.template).rows))} lembar A4
             {noPhoto > 0 && <span className="text-warn"> · {noPhoto} tanpa foto</span>}
             {noNomor > 0 && <span className="text-warn"> · {noNomor} tanpa nomor peserta</span>}
           </p>
