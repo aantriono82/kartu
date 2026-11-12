@@ -7,8 +7,8 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
-    "dist:win": "electron-vite build && electron-builder --win nsis --x64",
-    "dist:linux": "electron-vite build && electron-builder --linux AppImage --x64"
+    "dist:win": "electron-vite build && electron-builder --win nsis --x64 --publish never",
+    "dist:linux": "electron-vite build && electron-builder --linux AppImage --x64 --publish never"
   },
   "author": "Kartu Ujian",
   "license": "UNLICENSED",
