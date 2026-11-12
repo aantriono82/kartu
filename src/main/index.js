@@ -10,6 +10,7 @@ import * as excel from './excel'
 import * as photoSource from './photoSource'
 import * as exporter from './export'
 import { removeWhiteBackground, trimImage } from './image'
+import appIcon from '../../build/icon.png?asset'
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'kartu', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }
@@ -40,6 +41,7 @@ function createWindow() {
     minHeight: 700,
     title: 'Kartu Peserta Ujian',
     autoHideMenuBar: true,
+    icon: appIcon, // ikon jendela/taskbar di Linux (Windows memakai ikon dari .exe)
     webPreferences: rendererPrefs()
   })
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
